@@ -1,0 +1,272 @@
+@import "tailwindcss";
+
+/* ==========================================
+   CSS CUSTOM PROPERTIES (Design Tokens)
+   ========================================== */
+
+:root {
+  /* Color Palette */
+  --color-primary: #3b82f6;        /* Blue-500 */
+  --color-primary-hover: #2563eb;  /* Blue-600 */
+  --color-primary-light: #60a5fa;  /* Blue-400 */
+  --color-primary-dark: #1d4ed8;   /* Blue-700 */
+
+  --color-secondary: #10b981;      /* Emerald-500 */
+  --color-secondary-hover: #059669; /* Emerald-600 */
+
+  --color-accent: #f59e0b;         /* Amber-500 */
+  --color-accent-hover: #d97706;   /* Amber-600 */
+
+  --color-danger: #ef4444;         /* Red-500 */
+  --color-danger-hover: #dc2626;   /* Red-600 */
+
+  --color-warning: #f59e0b;        /* Amber-500 */
+  --color-warning-hover: #d97706;   /* Amber-600 */
+
+  --color-success: #10b981;        /* Emerald-500 */
+  --color-success-hover: #059669;  /* Emerald-600 */
+
+  --color-info: #3b82f6;           /* Blue-500 */
+  --color-info-hover: #2563eb;     /* Blue-600 */
+
+  /* Background Colors */
+  --bg-primary: #111827;           /* Gray-900 */
+  --bg-secondary: #1f2937;         /* Gray-800 */
+  --bg-tertiary: #374151;          /* Gray-700 */
+  --bg-quaternary: #4b5563;        /* Gray-600 */
+  --bg-surface: #6b7280;           /* Gray-500 */
+
+  /* Text Colors */
+  --text-primary: #f9fafb;         /* Gray-50 */
+  --text-secondary: #d1d5db;       /* Gray-300 */
+  --text-tertiary: #9ca3af;        /* Gray-400 */
+  --text-muted: #6b7280;           /* Gray-500 */
+  --text-disabled: #4b5563;        /* Gray-600 */
+
+  /* Border Colors */
+  --border-primary: #374151;       /* Gray-700 */
+  --border-secondary: #4b5563;     /* Gray-600 */
+  --border-focus: var(--color-primary);
+
+  /* Status Colors */
+  --status-connected: var(--color-success);
+  --status-disconnected: var(--color-danger);
+  --status-paired: var(--color-info);
+  --status-discovering: var(--color-warning);
+  --status-logging: var(--color-accent);
+
+  /* Spacing Scale */
+  --space-xs: 0.25rem;    /* 4px */
+  --space-sm: 0.5rem;     /* 8px */
+  --space-md: 1rem;       /* 16px */
+  --space-lg: 1.5rem;     /* 24px */
+  --space-xl: 2rem;       /* 32px */
+  --space-2xl: 3rem;      /* 48px */
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.375rem;  /* 6px */
+  --radius-lg: 0.5rem;    /* 8px */
+  --radius-xl: 0.75rem;   /* 12px */
+  --radius-2xl: 1rem;     /* 16px */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+
+  /* Typography */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-5xl: 3rem;      /* 48px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Component-specific variables */
+  --gpio-pin-bg: var(--bg-secondary);
+  --gpio-pin-border: var(--border-primary);
+  --gpio-pin-hover: var(--bg-tertiary);
+
+  --bluetooth-device-bg: var(--bg-secondary);
+  --bluetooth-device-border: var(--border-primary);
+  --bluetooth-device-hover: var(--bg-tertiary);
+
+  --button-primary-bg: var(--color-primary);
+  --button-primary-hover: var(--color-primary-hover);
+  --button-secondary-bg: var(--bg-tertiary);
+  --button-secondary-hover: var(--bg-quaternary);
+  --button-disabled-bg: var(--bg-surface);
+  --button-disabled-text: var(--text-disabled);
+
+  --card-bg: var(--bg-secondary);
+  --card-border: var(--border-primary);
+  --card-hover: var(--bg-tertiary);
+
+  --input-bg: var(--bg-tertiary);
+  --input-border: var(--border-secondary);
+  --input-focus-border: var(--border-focus);
+  --input-text: var(--text-primary);
+  --input-placeholder: var(--text-tertiary);
+
+  --sidebar-bg: var(--bg-secondary);
+  --sidebar-border: var(--border-primary);
+  --sidebar-item-active: var(--color-primary);
+  --sidebar-item-hover: var(--bg-tertiary);
+  --sidebar-text: var(--text-secondary);
+  --sidebar-text-active: var(--text-primary);
+}
+
+/* ==========================================
+   CSS VARIABLES ONLY - NO CONFLICTING CLASSES
+   ========================================== */
+
+/* ==========================================
+   CUSTOM COMPONENT STYLES
+   ========================================== */
+
+/* GPIO Control Interface */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+}
+
+.slider::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+}
+
+/* Navigation Sidebar */
+.nav-sidebar {
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+.nav-item {
+  transition: all var(--transition-fast);
+}
+
+.nav-item:hover {
+  background-color: var(--sidebar-item-hover);
+  color: var(--sidebar-text-active);
+}
+
+.nav-item.active {
+  background-color: var(--sidebar-item-active);
+  color: var(--sidebar-text-active);
+}
+
+/* Cards and Panels */
+.panel-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  transition: background-color var(--transition-fast);
+}
+
+.panel-card:hover {
+  background-color: var(--card-hover);
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: var(--space-sm);
+}
+
+.status-connected { background-color: var(--status-connected); }
+.status-disconnected { background-color: var(--status-disconnected); }
+.status-paired { background-color: var(--status-paired); }
+.status-discovering { background-color: var(--status-discovering); }
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Focus Styles */
+.focus-ring:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Loading States */
+.loading-shimmer {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-quaternary) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .mobile-hidden { display: none; }
+  .mobile-full { width: 100%; }
+}
+
+/* Dark Mode Enhancements */
+@media (prefers-color-scheme: dark) {
+  /* Already using dark theme, but can add specific dark mode enhancements here */
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-primary: #ffffff;
+    --text-primary: #ffffff;
+    --bg-primary: #000000;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Hide scrollbar for webkit browsers */
+.bluetooth-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.bluetooth-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
