@@ -16,10 +16,13 @@ A modern, minimalist car headunit interface built with React and Node.js. Contro
 - **Cross-Platform**: Works on Windows (via PowerShell + WinRT APIs) and Linux (via BlueZ)
 
 ### 📡 Bluetooth Device Management
-- **Device Discovery**: Scan for nearby Bluetooth devices
-- **Pairing & Connection**: Easy device pairing and connection management
-- **Device Information**: View connection status, device type, and last seen
+- **Device Discovery**: Scan for nearby Bluetooth devices with live updates
+- **Pairing & Connection**: Easy device pairing and connection management directly from the app
+- **Native Platform Support**: BlueZ/D-Bus on Linux, PowerShell/WMI on Windows
+- **Device Information**: View connection status, device type, signal strength, and last seen
+- **Smart Device Detection**: Automatically identifies phones, headphones, speakers, and more
 - **History Tracking**: Monitor all Bluetooth operations with detailed logs
+- **No System Settings Required**: Complete device management without leaving the app!
 
 ### ⚡ GPIO Control
 - **Hardware Pin Control**: Control GPIO pins on Raspberry Pi and similar devices
@@ -103,28 +106,47 @@ The application will be available at `http://localhost:5173`
 
 ### Linux Setup
 
-1. Run the automated setup script:
+**🎉 NEW: Full native Bluetooth device management!** Connect to devices directly from the app using BlueZ/D-Bus - no system settings required!
+
+1. Ensure BlueZ is running:
+```bash
+sudo systemctl start bluetooth
+sudo systemctl enable bluetooth
+```
+
+2. Set up D-Bus permissions (choose one):
+
+**Option A: Quick testing (run with sudo)**
+```bash
+sudo npm run electron-dev
+```
+
+**Option B: Production setup (recommended)**
+```bash
+# Add yourself to bluetooth group
+sudo usermod -a -G bluetooth $USER
+
+# Or create D-Bus policy file (see LINUX_BLUETOOTH_GUIDE.md)
+```
+
+3. For Bluetooth audio streaming, run the automated setup:
 ```bash
 chmod +x setup-bluetooth-audio.sh
 ./setup-bluetooth-audio.sh
 ```
 
-2. The script will:
-   - Install BlueZ and PulseAudio/PipeWire
-   - Configure Bluetooth services
-   - Set up audio routing
-   - Configure user permissions
+4. Log out and back in for permissions to take effect
 
-3. Log out and back in for group changes to take effect
-
-4. Start NodeNav and pair your phone in **Settings** → **Bluetooth**
+5. Start NodeNav and discover/pair/connect devices in **Settings** → **Bluetooth**
 
 **Requirements:**
-- BlueZ 5.50+
-- PulseAudio 10.0+ or PipeWire 0.3+
-- bluetoothctl command-line tool
+- BlueZ 5.50+ (pre-installed on most distros)
+- D-Bus (pre-installed)
+- PulseAudio 10.0+ or PipeWire 0.3+ (for audio streaming)
 
-**📖 Detailed Guide**: See [BLUETOOTH_AUDIO_SETUP.md](BLUETOOTH_AUDIO_SETUP.md)
+**📖 Detailed Guides**: 
+- [LINUX_BLUETOOTH_GUIDE.md](LINUX_BLUETOOTH_GUIDE.md) - Device management (NEW!)
+- [BLUETOOTH_AUDIO_SETUP.md](BLUETOOTH_AUDIO_SETUP.md) - Audio streaming setup
 
 ### Raspberry Pi GPIO Setup
 
@@ -216,7 +238,7 @@ Use the bottom navigation bar to quickly switch between:
 
 **Platform Integration:**
 - **Windows**: PowerShell + Windows Runtime APIs
-- **Linux**: BlueZ (bluetoothctl) + PulseAudio/PipeWire
+- **Linux**: BlueZ (D-Bus API) + PulseAudio/PipeWire
 - **GPIO**: Native GPIO libraries (Raspberry Pi)
 
 ## 📂 Project Structure
@@ -241,9 +263,11 @@ NodeNav/
 │   │
 │   ├── services/                  # Backend services
 │   │   ├── api.js                 # Frontend API client
-│   │   ├── bluetooth-service.js   # Bluetooth device management
+│   │   ├── bluetooth-service.js   # Bluetooth device management (platform router)
+│   │   ├── bluetooth-device-linux.js   # Linux Bluetooth (BlueZ/D-Bus) - NEW!
+│   │   ├── bluetooth-device-windows.js # Windows Bluetooth (PowerShell)
 │   │   ├── bluetooth-audio-service.js  # Audio streaming (platform router)
-│   │   ├── bluetooth-audio-windows.js  # Windows implementation
+│   │   ├── bluetooth-audio-windows.js  # Windows audio implementation
 │   │   ├── gpio-service.js        # GPIO control
 │   │   └── server.js              # Express backend server
 │   │
@@ -324,9 +348,12 @@ npm run start
 
 ### Platform-Specific Guides
 
+- **Linux Bluetooth**: See [LINUX_BLUETOOTH_GUIDE.md](LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Complete device management
+- **Linux Audio**: See [BLUETOOTH_AUDIO_SETUP.md](BLUETOOTH_AUDIO_SETUP.md)
 - **Windows**: See [WINDOWS_TESTING_GUIDE.md](WINDOWS_TESTING_GUIDE.md)
-- **Linux**: See [BLUETOOTH_AUDIO_SETUP.md](BLUETOOTH_AUDIO_SETUP.md)
-- **Implementation Details**: See [BLUETOOTH_AUDIO_IMPLEMENTATION.md](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
+- **Implementation Details**: 
+  - [LINUX_BLUETOOTH_IMPLEMENTATION.md](LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!**
+  - [BLUETOOTH_AUDIO_IMPLEMENTATION.md](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
 
 ## 🌟 Features Roadmap
 
@@ -414,10 +441,12 @@ This project is licensed under the ISC License. See the LICENSE file for details
 ## 📚 Documentation
 
 - [Main README](README.md) - This file
+- [Linux Bluetooth Guide](LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Device management on Linux
+- [Linux Bluetooth Implementation](LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!** Technical details
 - [Bluetooth Audio Setup (Linux)](BLUETOOTH_AUDIO_SETUP.md)
 - [Windows Bluetooth Setup](WINDOWS_BLUETOOTH_SETUP.md)
 - [Windows Testing Guide](WINDOWS_TESTING_GUIDE.md)
-- [Bluetooth Implementation Details](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
+- [Bluetooth Audio Implementation Details](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
 
 ## 🔗 Useful Links
 
@@ -454,7 +483,8 @@ This project is licensed under the ISC License. See the LICENSE file for details
 | Feature | Windows 10/11 | Linux | macOS | Raspberry Pi |
 |---------|---------------|-------|-------|--------------|
 | Media Player | ✅ Full | ✅ Full | ⚠️ Planned | ✅ Full |
-| Bluetooth | ✅ Full | ✅ Full | ⚠️ Planned | ✅ Full |
+| Bluetooth Device Mgmt | ✅ Native | ✅ **Native (NEW!)** | ⚠️ Planned | ✅ Native |
+| Bluetooth Audio | ✅ Full | ✅ Full | ⚠️ Planned | ✅ Full |
 | GPIO | ❌ N/A | ✅ Full | ❌ N/A | ✅ Full |
 | UI | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
 
