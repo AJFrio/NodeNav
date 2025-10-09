@@ -6,39 +6,23 @@ const GPIOControl = () => {
   const [currentColor, setCurrentColor] = useState({ h: 0, s: 100, l: 50 });
   const [brightness, setBrightness] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
-  const [commandHistory, setCommandHistory] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    loadHistory();
     drawColorWheel();
-
-    // Set up polling for real-time updates (every 2 seconds)
-    const interval = setInterval(loadHistory, 2000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     drawColorWheel();
   }, [currentColor]);
 
-  const loadHistory = async () => {
-    try {
-      const history = await gpioAPI.getCommandHistory();
-      setCommandHistory(history.slice(-10)); // Last 10 commands
-    } catch (err) {
-      console.error('Error loading history:', err);
-    }
-  };
-
   const drawColorWheel = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: false });
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const radius = Math.min(centerX, centerY) - 10;
@@ -46,29 +30,44 @@ const GPIOControl = () => {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw color wheel
-    for (let angle = 0; angle < 360; angle += 1) {
-      for (let r = 0; r < radius; r += 1) {
-        const radian = (angle * Math.PI) / 180;
-        const x = centerX + r * Math.cos(radian);
-        const y = centerY + r * Math.sin(radian);
+    // Use image data for more efficient and artifact-free rendering
+    const imageData = ctx.createImageData(canvas.width, canvas.height);
+    const data = imageData.data;
 
-        // Convert HSL to RGB for canvas
-        const hue = angle;
-        const saturation = (r / radius) * 100;
-        const lightness = 50;
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const deltaX = x - centerX;
+        const deltaY = y - centerY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-        ctx.fillRect(x - 0.5, y - 0.5, 1, 1);
+        if (distance <= radius) {
+          const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+          const hue = ((angle + 360) % 360);
+          const saturation = (distance / radius) * 100;
+          const lightness = 50;
+
+          // Convert HSL to RGB
+          const rgb = hslToRgbDirect(hue, saturation, lightness);
+          
+          const index = (y * canvas.width + x) * 4;
+          data[index] = rgb.r;
+          data[index + 1] = rgb.g;
+          data[index + 2] = rgb.b;
+          data[index + 3] = 255; // Alpha
+        }
       }
     }
+
+    ctx.putImageData(imageData, 0, 0);
 
     // Draw brightness overlay (darker in center)
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
     gradient.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
     gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.fill();
 
     // Draw selection indicator
     const selectionRadius = 8;
@@ -81,10 +80,41 @@ const GPIOControl = () => {
     ctx.arc(selectionX, selectionY, selectionRadius, 0, 2 * Math.PI);
     ctx.stroke();
 
-    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(selectionX, selectionY, selectionRadius - 2, 0, 2 * Math.PI);
-    ctx.fill();
+    ctx.arc(selectionX, selectionY, selectionRadius, 0, 2 * Math.PI);
+    ctx.stroke();
+  };
+
+  // Helper function to convert HSL to RGB for direct pixel manipulation
+  const hslToRgbDirect = (h, s, l) => {
+    s /= 100;
+    l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+
+    if (0 <= h && h < 60) {
+      r = c; g = x; b = 0;
+    } else if (60 <= h && h < 120) {
+      r = x; g = c; b = 0;
+    } else if (120 <= h && h < 180) {
+      r = 0; g = c; b = x;
+    } else if (180 <= h && h < 240) {
+      r = 0; g = x; b = c;
+    } else if (240 <= h && h < 300) {
+      r = x; g = 0; b = c;
+    } else if (300 <= h && h < 360) {
+      r = c; g = 0; b = x;
+    }
+
+    return {
+      r: Math.round((r + m) * 255),
+      g: Math.round((g + m) * 255),
+      b: Math.round((b + m) * 255)
+    };
   };
 
   const updateColorFromPosition = (clientX, clientY) => {
@@ -158,8 +188,9 @@ const GPIOControl = () => {
   };
 
   const handleBrightnessSliderMouseDown = (event) => {
+    const slider = event.currentTarget;
+    
     const updateBrightness = (clientY) => {
-      const slider = event.currentTarget;
       const rect = slider.getBoundingClientRect();
       const height = rect.height;
       const y = clientY - rect.top;
@@ -192,7 +223,6 @@ const GPIOControl = () => {
       await gpioAPI.pwmWrite(2, rgbColor.r);
       await gpioAPI.pwmWrite(3, rgbColor.g);
       await gpioAPI.pwmWrite(4, rgbColor.b);
-      await loadHistory();
     } catch (err) {
       setError('Failed to apply color');
       console.error('Error applying color:', err);
@@ -321,8 +351,8 @@ const GPIOControl = () => {
                 right: '0',
                 height: `${brightness}%`,
                 backgroundColor: colors['text-primary'],
-                borderRadius: '0 0 18px 18px',
-                transition: 'height 0.1s ease-out',
+                borderRadius: brightness >= 98 ? '18px' : '0 0 18px 18px',
+                transition: 'height 0.1s ease-out, border-radius 0.1s ease-out',
               }} />
             </div>
 
@@ -355,91 +385,6 @@ const GPIOControl = () => {
               <div>Brightness: {brightness}%</div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Command History */}
-      <div style={{
-        marginTop: '2rem',
-        ...styles.card,
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-        }}>
-          <h2 style={{
-            ...styles.typography.h2,
-            color: colors['text-primary'],
-          }}>Recent Commands</h2>
-          <button
-            onClick={async () => {
-              await gpioAPI.clearCommandHistory();
-              setCommandHistory([]);
-            }}
-            style={{
-              ...styles.button.secondary,
-              padding: '0.5rem 1rem',
-              fontSize: '0.875rem',
-            }}
-          >
-            Clear
-          </button>
-        </div>
-
-        <div style={{
-          maxHeight: '300px',
-          overflowY: 'auto',
-          backgroundColor: colors['bg-tertiary'],
-          borderRadius: '0.375rem',
-          padding: '1rem',
-        }}>
-          {loading ? (
-            <div style={{
-              textAlign: 'center',
-              color: colors['text-secondary'],
-            }}>Loading...</div>
-          ) : commandHistory.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              color: colors['text-secondary'],
-            }}>No commands yet</div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
-            }}>
-              {commandHistory.map((cmd, index) => (
-                <div key={index} style={{
-                  backgroundColor: colors['bg-quaternary'],
-                  padding: '0.75rem',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                }}>
-                  <div style={{
-                    color: colors['text-primary'],
-                    fontWeight: '500',
-                  }}>
-                    {cmd.type.toUpperCase()} - Pin {cmd.pin}
-                  </div>
-                  <div style={{
-                    color: colors['text-secondary'],
-                    fontSize: '0.75rem',
-                  }}>
-                    {new Date(cmd.timestamp).toLocaleTimeString()}
-                  </div>
-                  {cmd.value !== undefined && (
-                    <div style={{ color: colors.info }}>Value: {cmd.value}</div>
-                  )}
-                  {cmd.mode && (
-                    <div style={{ color: colors.success }}>Mode: {cmd.mode}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
