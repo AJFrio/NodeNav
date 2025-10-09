@@ -19,18 +19,14 @@ const BluetoothSettings = () => {
       try {
         setLoading(true);
         await loadAllData();
+        setLoading(false);
 
-        // Only set up polling if we have an adapter and no error
-        if (adapter && !error) {
-          setHasAdapter(true);
-          interval = setInterval(loadAllData, 3000);
-        } else {
-          setHasAdapter(false);
-        }
+        // Only set up polling if we have an adapter (check will happen in loadAllData)
+        // Set up interval after first load to poll for updates
+        interval = setInterval(loadAllData, 3000);
       } catch (err) {
         console.error('Bluetooth initialization failed:', err);
         setError('Bluetooth adapter not found or unavailable');
-      } finally {
         setLoading(false);
       }
     };
@@ -461,8 +457,8 @@ const BluetoothSettings = () => {
                     style={{
                       flex: 1,
                       padding: '0.5rem 0.75rem',
-                      backgroundColor: colors.danger,
-                      color: colors['text-primary'],
+                      backgroundColor: '#000000',
+                      color: '#ffffff',
                       borderRadius: '0.375rem',
                       fontSize: '0.875rem',
                       fontWeight: '500',
@@ -470,8 +466,8 @@ const BluetoothSettings = () => {
                       transition: 'background-color 150ms ease-in-out',
                       border: 'none',
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = colors['danger-hover']}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = colors.danger}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
                   >
                     Disconnect
                   </button>
@@ -481,8 +477,8 @@ const BluetoothSettings = () => {
                     style={{
                       flex: 1,
                       padding: '0.5rem 0.75rem',
-                      backgroundColor: colors.warning,
-                      color: colors['text-primary'],
+                      backgroundColor: '#000000',
+                      color: '#ffffff',
                       borderRadius: '0.375rem',
                       fontSize: '0.875rem',
                       fontWeight: '500',
@@ -490,8 +486,8 @@ const BluetoothSettings = () => {
                       transition: 'background-color 150ms ease-in-out',
                       border: 'none',
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = colors['warning-hover']}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = colors.warning}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
                   >
                     Unpair
                   </button>
@@ -619,8 +615,8 @@ const BluetoothSettings = () => {
                       style={{
                       flex: 1,
                       padding: '0.5rem 0.75rem',
-                      backgroundColor: colors.warning,
-                      color: colors['text-primary'],
+                      backgroundColor: '#000000',
+                      color: '#ffffff',
                       borderRadius: '0.375rem',
                       fontSize: '0.875rem',
                       fontWeight: '500',
@@ -628,8 +624,8 @@ const BluetoothSettings = () => {
                       transition: 'background-color 150ms ease-in-out',
                       border: 'none',
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = colors['warning-hover']}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = colors.warning}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
                     >
                       Unpair
                     </button>
