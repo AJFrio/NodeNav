@@ -313,8 +313,9 @@ app.delete('/api/bluetooth/history', (req, res) => {
 app.post('/api/bluetooth/audio/connect/:address', async (req, res) => {
   try {
     const { address } = req.params;
-    const result = await bluetoothAudioService.connectAudioDevice(address);
-    res.json(result);
+    // Find media player for the device
+    const found = await bluetoothService.findMediaPlayer(address);
+    res.json({ success: found, device: address });
   } catch (error) {
     console.error(`Error connecting audio to device ${req.params.address}:`, error);
     res.status(500).json({ error: error.message || 'Failed to connect audio' });
@@ -326,8 +327,8 @@ app.post('/api/bluetooth/audio/connect/:address', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/disconnect', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.disconnectAudioDevice();
-    res.json(result);
+    // Media player will be cleared when device disconnects
+    res.json({ success: true });
   } catch (error) {
     console.error('Error disconnecting audio device:', error);
     res.status(500).json({ error: error.message || 'Failed to disconnect audio' });
@@ -337,9 +338,9 @@ app.post('/api/bluetooth/audio/disconnect', async (req, res) => {
 /**
  * GET /api/bluetooth/audio/state - Get current media playback state
  */
-app.get('/api/bluetooth/audio/state', (req, res) => {
+app.get('/api/bluetooth/audio/state', async (req, res) => {
   try {
-    const state = bluetoothAudioService.getMediaState();
+    const state = await bluetoothService.getMediaMetadata();
     res.json(state);
   } catch (error) {
     console.error('Error getting media state:', error);
@@ -352,7 +353,7 @@ app.get('/api/bluetooth/audio/state', (req, res) => {
  */
 app.post('/api/bluetooth/audio/play', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.play();
+    const result = await bluetoothService.mediaControl('play');
     res.json(result);
   } catch (error) {
     console.error('Error playing media:', error);
@@ -365,7 +366,7 @@ app.post('/api/bluetooth/audio/play', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/pause', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.pause();
+    const result = await bluetoothService.mediaControl('pause');
     res.json(result);
   } catch (error) {
     console.error('Error pausing media:', error);
@@ -378,7 +379,7 @@ app.post('/api/bluetooth/audio/pause', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/next', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.next();
+    const result = await bluetoothService.mediaControl('next');
     res.json(result);
   } catch (error) {
     console.error('Error skipping to next track:', error);
@@ -391,7 +392,7 @@ app.post('/api/bluetooth/audio/next', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/previous', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.previous();
+    const result = await bluetoothService.mediaControl('previous');
     res.json(result);
   } catch (error) {
     console.error('Error going to previous track:', error);
@@ -404,7 +405,7 @@ app.post('/api/bluetooth/audio/previous', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/stop', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.stop();
+    const result = await bluetoothService.mediaControl('stop');
     res.json(result);
   } catch (error) {
     console.error('Error stopping playback:', error);

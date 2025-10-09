@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import GPIOControl from './pages/GPIOControl';
 import BluetoothSettings from './pages/BluetoothSettings';
 import MediaPlayer from './pages/MediaPlayer';
+import DataPage from './pages/DataPage';
 import HomeScreenCard from './components/HomeScreenCard';
 import SettingsButton from './components/SettingsButton';
 import NavigationItem from './components/NavigationItem';
@@ -22,7 +23,7 @@ function App() {
 
   const navigationItems = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'gpio', label: 'GPIO Control', icon: Lightbulb },
+    { id: 'gpio', label: 'Lights', icon: Lightbulb },
     { id: 'navigation', label: 'Navigation', icon: Map },
     { id: 'media', label: 'Media', icon: Music },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -70,8 +71,8 @@ function App() {
               <SettingsButton
                 icon={BarChart3}
                 title="Data"
-                description="Data management (Coming Soon)"
-                disabled={true}
+                description="View command history"
+                onClick={() => setCurrentView('data')}
                 variant="tertiary"
               />
             </div>
@@ -113,6 +114,8 @@ function App() {
         );
       case 'bluetooth':
         return <BluetoothSettings />;
+      case 'data':
+        return <DataPage />;
       case 'home':
       default:
         return (
@@ -149,9 +152,9 @@ function App() {
                 margin: '0 auto',
               }}>
                 <HomeScreenCard
-                  icon={Wrench}
-                  title="GPIO Control"
-                  description="Control hardware pins"
+                  icon={Lightbulb}
+                  title="Lights"
+                  description="Control lighting"
                   onClick={() => setCurrentView('gpio')}
                 />
 

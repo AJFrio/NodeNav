@@ -64,19 +64,30 @@ const MediaPlayer = () => {
     };
   }, []);
 
+  // Track last known position from backend to detect track changes
+  const lastBackendPosition = useRef(0);
+  
   // Update media state from backend
   const updateMediaState = async () => {
     try {
       const state = await bluetoothAPI.getMediaState();
       
       if (state.connected && state.track) {
+        const backendPosition = state.track.position || 0;
+        
+        // Check if track changed (position jumped backwards significantly)
+        if (lastBackendPosition.current > 10 && backendPosition < 5) {
+          console.log('[Media Player] Track changed detected');
+        }
+        lastBackendPosition.current = backendPosition;
+        
         setIsPlaying(state.isPlaying);
         setCurrentTrack({
           title: state.track.title || 'Unknown',
           artist: state.track.artist || 'Unknown',
           album: state.track.album || 'Unknown',
           duration: state.track.duration || 0,
-          position: state.track.position || 0
+          position: backendPosition
         });
       }
     } catch (error) {
@@ -85,19 +96,23 @@ const MediaPlayer = () => {
     }
   };
 
-  // Update progress when playing
+  // Update progress when playing (only for smooth UI updates between backend polls)
   useEffect(() => {
     if (isPlaying) {
       progressInterval.current = setInterval(() => {
         setCurrentTrack(prev => {
-          if (prev.position >= prev.duration) {
-            // Track ended, simulate next track
-            handleNext();
-            return prev;
+          // Just increment position for smooth progress bar
+          // Don't auto-skip - let the backend handle track changes
+          const newPosition = prev.position + 1;
+          
+          // Cap at duration to prevent overflow
+          if (prev.duration > 0 && newPosition > prev.duration) {
+            return prev; // Stop incrementing past duration
           }
+          
           return {
             ...prev,
-            position: prev.position + 1
+            position: newPosition
           };
         });
       }, 1000);
@@ -303,17 +318,9 @@ const MediaPlayer = () => {
         <p style={{
           fontSize: '0.875rem',
           color: colors['text-secondary'],
-          marginBottom: '0.25rem',
-          margin: '0.375rem 0 0.25rem 0',
+          margin: '0.375rem 0 0 0',
         }}>
           {currentTrack.artist}
-        </p>
-        <p style={{
-          fontSize: '0.75rem',
-          color: colors['text-tertiary'],
-          margin: 0,
-        }}>
-          {currentTrack.album}
         </p>
       </div>
 

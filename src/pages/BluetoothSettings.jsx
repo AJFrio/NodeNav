@@ -6,7 +6,6 @@ const BluetoothSettings = () => {
   const [adapterInfo, setAdapterInfo] = useState(null);
   const [devices, setDevices] = useState([]);
   const [connectedDevices, setConnectedDevices] = useState([]);
-  const [history, setHistory] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -43,17 +42,15 @@ const BluetoothSettings = () => {
   const loadAllData = async () => {
     try {
       setLoading(true);
-      const [adapter, allDevices, connected, bluetoothHistory] = await Promise.all([
+      const [adapter, allDevices, connected] = await Promise.all([
         bluetoothAPI.getAdapterInfo(),
         bluetoothAPI.getDevices(),
-        bluetoothAPI.getConnectedDevices(),
-        bluetoothAPI.getBluetoothHistory()
+        bluetoothAPI.getConnectedDevices()
       ]);
 
       setAdapterInfo(adapter);
       setDevices(allDevices);
       setConnectedDevices(connected);
-      setHistory(bluetoothHistory.slice(-10)); // Last 10 commands
       setError(null);
       setHasAdapter(!!adapter);
     } catch (err) {
@@ -145,16 +142,6 @@ const BluetoothSettings = () => {
     }
   };
 
-  const clearHistory = async () => {
-    try {
-      await bluetoothAPI.clearBluetoothHistory();
-      setHistory([]);
-    } catch (err) {
-      setError('Failed to clear Bluetooth command history');
-      console.error('Error clearing history:', err);
-    }
-  };
-
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString();
   };
@@ -169,6 +156,37 @@ const BluetoothSettings = () => {
     if (device.connected) return 'Connected';
     if (device.paired) return 'Paired';
     return 'Discovered';
+  };
+
+  const getSignalStrength = (rssi) => {
+    if (!rssi) return 'Unknown';
+    if (rssi >= -50) return 'Excellent';
+    if (rssi >= -60) return 'Good';
+    if (rssi >= -70) return 'Fair';
+    if (rssi >= -80) return 'Weak';
+    return 'Very Weak';
+  };
+
+  const getSignalBars = (rssi) => {
+    if (!rssi) return '📶';
+    if (rssi >= -50) return '📶📶📶📶';
+    if (rssi >= -60) return '📶📶📶';
+    if (rssi >= -70) return '📶📶';
+    if (rssi >= -80) return '📶';
+    return '📵';
+  };
+
+  // Sort and filter devices - show only top 5 by signal strength
+  const getTopDevicesBySignal = (deviceList, limit = 5) => {
+    return deviceList
+      .filter(d => !d.connected) // Exclude connected devices
+      .sort((a, b) => {
+        // Sort by RSSI (higher is better, less negative means stronger)
+        const rssiA = a.rssi || -100; // Default to very weak if no RSSI
+        const rssiB = b.rssi || -100;
+        return rssiB - rssiA; // Descending order
+      })
+      .slice(0, limit); // Take top 5
   };
 
   return (
@@ -266,6 +284,23 @@ const BluetoothSettings = () => {
                   color: colors['bg-primary'],
                 }}>
                   {adapterInfo.discoverable ? 'Yes' : 'No'}
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}>
+                <span style={{ color: colors['text-secondary'] }}>Pairable:</span>
+                <span style={{
+                  padding: '0.125rem 0.5rem',
+                  borderRadius: '0.25rem',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
+                  backgroundColor: adapterInfo.pairable ? colors.success : colors.warning,
+                  color: colors['bg-primary'],
+                }}>
+                  {adapterInfo.pairable ? 'Yes' : 'No'}
                 </span>
               </div>
 
@@ -381,6 +416,19 @@ const BluetoothSettings = () => {
           }}>
             {isScanning ? '🔍 Scanning for devices...' : 'Click "Start Scan" to discover nearby Bluetooth devices'}
           </div>
+          
+          {adapterInfo && adapterInfo.discoverable && adapterInfo.pairable && (
+            <div style={{
+              marginTop: '0.75rem',
+              padding: '0.75rem',
+              backgroundColor: colors['bg-tertiary'],
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              color: colors['text-secondary'],
+            }}>
+              💡 <strong>Tip:</strong> You can also pair from your phone! Look for "{adapterInfo.name || 'NodeNav Headunit'}" in your phone's Bluetooth settings.
+            </div>
+          )}
         </div>
       </div>
 
@@ -425,7 +473,12 @@ const BluetoothSettings = () => {
                     fontSize: '1.125rem',
                     fontWeight: '600',
                     color: colors['text-primary'],
-                  }}>{device.name}</h3>
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginRight: '0.5rem',
+                  }}>{device.name || device.address}</h3>
                   <span style={{
                     padding: '0.125rem 0.5rem',
                     borderRadius: '0.25rem',
@@ -443,9 +496,27 @@ const BluetoothSettings = () => {
                   color: colors['text-secondary'],
                   marginBottom: '0.75rem',
                 }}>
-                  <div>Address: {device.address}</div>
+                  {device.name && device.name !== device.address && (
+                    <div style={{ 
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      marginBottom: '0.25rem'
+                    }}>
+                      {device.address}
+                    </div>
+                  )}
                   <div>Type: {device.type}</div>
-                  <div>Last Seen: {formatTime(device.lastSeen)}</div>
+                  {device.rssi && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}>
+                      <span>{getSignalBars(device.rssi)}</span>
+                      <span>Signal: {device.rssi} dBm ({getSignalStrength(device.rssi)})</span>
+                    </div>
+                  )}
+                  <div style={{ fontSize: '0.75rem' }}>Last Seen: {formatTime(device.lastSeen)}</div>
                 </div>
 
                 <div style={{
@@ -504,7 +575,7 @@ const BluetoothSettings = () => {
           ...styles.typography.h2,
           color: colors['text-primary'],
           marginBottom: '1rem',
-        }}>Available Devices</h2>
+        }}>Available Devices (Top 5 by Signal)</h2>
 
         {loading ? (
           <div style={{
@@ -512,14 +583,14 @@ const BluetoothSettings = () => {
             textAlign: 'center',
             padding: '2rem',
           }}>Loading...</div>
-        ) : devices.filter(d => !d.connected).length === 0 ? (
+        ) : getTopDevicesBySignal(devices).length === 0 ? (
           <div style={{
             ...styles.card,
             padding: '2rem',
             textAlign: 'center',
             color: colors['text-secondary'],
           }}>
-            No unpaired devices found
+            No devices found. Try starting a scan.
           </div>
         ) : (
           <div style={{
@@ -527,7 +598,7 @@ const BluetoothSettings = () => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
             gap: '1rem',
           }}>
-            {devices.filter(d => !d.connected).map((device) => (
+            {getTopDevicesBySignal(devices).map((device) => (
               <div key={device.address} style={styles.card}>
                 <div style={{
                   display: 'flex',
@@ -539,7 +610,12 @@ const BluetoothSettings = () => {
                     fontSize: '1.125rem',
                     fontWeight: '600',
                     color: colors['text-primary'],
-                  }}>{device.name}</h3>
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginRight: '0.5rem',
+                  }}>{device.name || device.address}</h3>
                   <span style={{
                     padding: '0.125rem 0.5rem',
                     borderRadius: '0.25rem',
@@ -557,10 +633,26 @@ const BluetoothSettings = () => {
                   color: colors['text-secondary'],
                   marginBottom: '0.75rem',
                 }}>
-                  <div>Address: {device.address}</div>
+                  {device.name && device.name !== device.address && (
+                    <div style={{ 
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      marginBottom: '0.25rem'
+                    }}>
+                      {device.address}
+                    </div>
+                  )}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '0.25rem'
+                  }}>
+                    <span>{getSignalBars(device.rssi)}</span>
+                    <span>Signal: {device.rssi ? `${device.rssi} dBm (${getSignalStrength(device.rssi)})` : 'Unknown'}</span>
+                  </div>
                   <div>Type: {device.type}</div>
-                  {device.rssi && <div>Signal: {device.rssi} dB</div>}
-                  <div>Last Seen: {formatTime(device.lastSeen)}</div>
+                  <div style={{ fontSize: '0.75rem' }}>Last Seen: {formatTime(device.lastSeen)}</div>
                 </div>
 
                 <div style={{
@@ -635,85 +727,6 @@ const BluetoothSettings = () => {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Command History */}
-      <div style={{ marginTop: '1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-        }}>
-          <h2 style={{
-          ...styles.typography.h2,
-          color: colors['text-primary'],
-        }}>Recent Bluetooth Commands</h2>
-          <button
-            onClick={clearHistory}
-            style={{
-              backgroundColor: colors['bg-tertiary'],
-              color: colors['text-primary'],
-              padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              transition: 'background-color 150ms ease-in-out',
-              border: 'none',
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = colors['bg-quaternary']}
-            onMouseLeave={(e) => e.target.style.backgroundColor = colors['bg-tertiary']}
-          >
-            Clear
-          </button>
-        </div>
-
-          <div style={{
-            ...styles.card,
-            maxHeight: '16rem',
-            overflowY: 'auto',
-          }}>
-          {loading ? (
-            <div style={{
-              color: colors['text-secondary'],
-              textAlign: 'center',
-            }}>Loading...</div>
-          ) : history.length === 0 ? (
-            <div style={{
-              color: colors['text-secondary'],
-              textAlign: 'center',
-            }}>No commands yet</div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem',
-            }}>
-              {history.map((cmd, index) => (
-                <div key={index} style={{
-                  backgroundColor: colors['bg-tertiary'],
-                  padding: '0.75rem',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                }}>
-                  <div style={{
-                    color: colors['text-primary'],
-                    fontWeight: '500',
-                  }}>
-                    {cmd.type.replace('_', ' ').toUpperCase()}
-                    {cmd.device && ` - ${cmd.device}`}
-                  </div>
-                  <div style={{
-                    color: colors['text-secondary'],
-                    fontSize: '0.75rem',
-                  }}>
-                    {formatTime(cmd.timestamp)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
