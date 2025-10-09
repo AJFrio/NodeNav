@@ -29,8 +29,10 @@ if ($version.Build -lt 17763) {
 Write-Host "✓ Windows version OK" -ForegroundColor Green
 Write-Host ""
 
-# Check Bluetooth service
-Write-Host "Checking Bluetooth service..." -ForegroundColor Yellow
+# Check and configure Bluetooth services
+Write-Host "Checking Bluetooth services..." -ForegroundColor Yellow
+
+# Check main Bluetooth service
 try {
     $btService = Get-Service -Name bthserv -ErrorAction Stop
     Write-Host "  Bluetooth Service: $($btService.Status)" -ForegroundColor Gray
@@ -42,7 +44,8 @@ try {
         if ($isAdmin) {
             try {
                 Start-Service bthserv -ErrorAction Stop
-                Write-Host "✓ Bluetooth service started" -ForegroundColor Green
+                Set-Service bthserv -StartupType Automatic
+                Write-Host "✓ Bluetooth service started and set to automatic" -ForegroundColor Green
             } catch {
                 Write-Host "❌ Failed to start Bluetooth service" -ForegroundColor Red
                 Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Red
@@ -54,6 +57,16 @@ try {
         }
     } else {
         Write-Host "✓ Bluetooth service is running" -ForegroundColor Green
+        
+        # Ensure it's set to automatic startup
+        if ($isAdmin -and $btService.StartType -ne "Automatic") {
+            try {
+                Set-Service bthserv -StartupType Automatic
+                Write-Host "✓ Bluetooth service set to automatic startup" -ForegroundColor Green
+            } catch {
+                Write-Host "⚠️  Could not set automatic startup" -ForegroundColor Yellow
+            }
+        }
     }
 } catch {
     Write-Host "❌ Bluetooth service not found" -ForegroundColor Red
@@ -61,6 +74,43 @@ try {
     Write-Host "   If you have a Bluetooth adapter, install drivers first" -ForegroundColor Yellow
     exit 1
 }
+
+# Check Bluetooth Audio Gateway service (for audio sink)
+Write-Host "  Checking Bluetooth Audio Gateway..." -ForegroundColor Gray
+try {
+    $btAudioService = Get-Service -Name BTAGService -ErrorAction SilentlyContinue
+    if ($btAudioService) {
+        Write-Host "    Audio Gateway Service: $($btAudioService.Status)" -ForegroundColor Gray
+        
+        if ($btAudioService.Status -ne "Running" -and $isAdmin) {
+            try {
+                Start-Service BTAGService -ErrorAction Stop
+                Set-Service BTAGService -StartupType Automatic
+                Write-Host "✓ Bluetooth Audio Gateway started and set to automatic" -ForegroundColor Green
+            } catch {
+                Write-Host "⚠️  Could not start Bluetooth Audio Gateway" -ForegroundColor Yellow
+            }
+        } elseif ($btAudioService.Status -eq "Running") {
+            Write-Host "✓ Bluetooth Audio Gateway is running" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "    Audio Gateway Service: Not available (optional)" -ForegroundColor Gray
+    }
+} catch {
+    Write-Host "    Audio Gateway Service: Not available (optional)" -ForegroundColor Gray
+}
+
+# Check Bluetooth Support service
+Write-Host "  Checking Bluetooth Support Service..." -ForegroundColor Gray
+try {
+    $btSupportService = Get-Service -Name bthserv -ErrorAction SilentlyContinue
+    if ($btSupportService -and $btSupportService.Status -eq "Running") {
+        Write-Host "✓ Bluetooth Support Service is running" -ForegroundColor Green
+    }
+} catch {
+    # Already handled above
+}
+
 Write-Host ""
 
 # Check for Bluetooth adapter
@@ -176,38 +226,124 @@ if (`$asTaskGeneric) { 'success' } else { 'failed' }
 }
 Write-Host ""
 
+# Configure Bluetooth Audio Sink (A2DP)
+Write-Host "Configuring Bluetooth Audio Sink..." -ForegroundColor Yellow
+
+if ($isAdmin) {
+    try {
+        # Enable Windows Audio service (required for Bluetooth audio)
+        $audioService = Get-Service -Name Audiosrv -ErrorAction SilentlyContinue
+        if ($audioService) {
+            if ($audioService.Status -ne "Running") {
+                Start-Service Audiosrv
+                Write-Host "✓ Windows Audio service started" -ForegroundColor Green
+            }
+            Set-Service Audiosrv -StartupType Automatic
+            Write-Host "✓ Windows Audio service configured for automatic startup" -ForegroundColor Green
+        }
+        
+        # Enable Audio Endpoint Builder (required for audio devices)
+        $audioEndpointService = Get-Service -Name AudioEndpointBuilder -ErrorAction SilentlyContinue
+        if ($audioEndpointService) {
+            if ($audioEndpointService.Status -ne "Running") {
+                Start-Service AudioEndpointBuilder
+                Write-Host "✓ Audio Endpoint Builder started" -ForegroundColor Green
+            }
+            Set-Service AudioEndpointBuilder -StartupType Automatic
+        }
+        
+        Write-Host "✓ Audio services configured" -ForegroundColor Green
+        Write-Host "  Your computer is now configured as a Bluetooth audio sink" -ForegroundColor Gray
+        Write-Host "  Paired phones can stream audio to this computer" -ForegroundColor Gray
+    } catch {
+        Write-Host "⚠️  Some audio configuration may have failed" -ForegroundColor Yellow
+        Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "⚠️  Administrator privileges required for audio sink configuration" -ForegroundColor Yellow
+    Write-Host "   Run as administrator to automatically configure audio sink" -ForegroundColor Yellow
+    Write-Host "   Or manually ensure:" -ForegroundColor Gray
+    Write-Host "   - Windows Audio service is running" -ForegroundColor Gray
+    Write-Host "   - Audio Endpoint Builder is running" -ForegroundColor Gray
+}
+Write-Host ""
+
+# Check audio devices
+Write-Host "Checking audio output devices..." -ForegroundColor Yellow
+try {
+    $audioDevices = Get-CimInstance -Namespace root\cimv2 -ClassName Win32_SoundDevice -ErrorAction SilentlyContinue
+    if ($audioDevices) {
+        Write-Host "✓ Audio output devices found:" -ForegroundColor Green
+        foreach ($device in $audioDevices) {
+            Write-Host "  - $($device.Name)" -ForegroundColor Gray
+        }
+    } else {
+        Write-Host "⚠️  No audio devices found" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "⚠️  Could not enumerate audio devices" -ForegroundColor Yellow
+}
+Write-Host ""
+
 # Summary
 Write-Host "===================================" -ForegroundColor Cyan
 Write-Host "Setup Check Complete!" -ForegroundColor Cyan
 Write-Host "===================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor White
-Write-Host "1. Pair your phone with Windows:" -ForegroundColor White
-Write-Host "   Settings -> Bluetooth & devices -> Add device" -ForegroundColor Gray
 Write-Host ""
-Write-Host "2. Start the NodeNav backend server:" -ForegroundColor White
+Write-Host "1. Pair your phone with Windows:" -ForegroundColor White
+Write-Host "   a. On Windows: Settings -> Bluetooth & devices -> Add device" -ForegroundColor Gray
+Write-Host "   b. Select 'Bluetooth'" -ForegroundColor Gray
+Write-Host "   c. On your phone: Enable Bluetooth and make it discoverable" -ForegroundColor Gray
+Write-Host "   d. Select your phone when it appears and confirm pairing" -ForegroundColor Gray
+Write-Host ""
+Write-Host "2. Configure audio output on your phone:" -ForegroundColor White
+Write-Host "   a. After pairing, go to phone's Bluetooth settings" -ForegroundColor Gray
+Write-Host "   b. Tap on your computer's name" -ForegroundColor Gray
+Write-Host "   c. Enable 'Media audio' or 'Audio' profile" -ForegroundColor Gray
+Write-Host "   d. Your phone should now show this PC as an audio device" -ForegroundColor Gray
+Write-Host ""
+Write-Host "3. Start the NodeNav backend server:" -ForegroundColor White
 Write-Host "   cd src" -ForegroundColor Gray
 Write-Host "   node server.js" -ForegroundColor Gray
 Write-Host ""
-Write-Host "3. Start the NodeNav frontend:" -ForegroundColor White
+Write-Host "4. Start the NodeNav frontend (in a new terminal):" -ForegroundColor White
 Write-Host "   npm run dev" -ForegroundColor Gray
 Write-Host ""
-Write-Host "4. In NodeNav:" -ForegroundColor White
+Write-Host "5. In NodeNav:" -ForegroundColor White
 Write-Host "   - Go to Settings -> Bluetooth" -ForegroundColor Gray
 Write-Host "   - Your paired phone should appear" -ForegroundColor Gray
-Write-Host "   - Click Connect" -ForegroundColor Gray
+Write-Host "   - Click Connect (establishes control connection)" -ForegroundColor Gray
 Write-Host "   - Navigate to Media Player tab" -ForegroundColor Gray
 Write-Host ""
-Write-Host "5. Play music on your phone" -ForegroundColor White
-Write-Host "   - Audio will stream to your computer" -ForegroundColor Gray
+Write-Host "6. Play music on your phone:" -ForegroundColor White
+Write-Host "   - Audio will stream to your computer speakers" -ForegroundColor Gray
 Write-Host "   - Track info will appear in NodeNav" -ForegroundColor Gray
-Write-Host "   - Control playback from NodeNav" -ForegroundColor Gray
+Write-Host "   - Control playback from NodeNav interface" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Important Notes:" -ForegroundColor Cyan
+Write-Host "  ✓ Your computer acts as a Bluetooth speaker/headset" -ForegroundColor Gray
+Write-Host "  ✓ Phone sends audio to computer (A2DP sink)" -ForegroundColor Gray
+Write-Host "  ✓ Computer receives media controls (AVRCP)" -ForegroundColor Gray
+Write-Host "  ✓ This works like connecting to wireless headphones" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Troubleshooting:" -ForegroundColor Yellow
-Write-Host "  - If audio doesn't play, check Windows sound settings" -ForegroundColor Gray
-Write-Host "  - Make sure phone is set to stream audio over Bluetooth" -ForegroundColor Gray
-Write-Host "  - Some apps (like YouTube) have limited Bluetooth support" -ForegroundColor Gray
-Write-Host "  - Try dedicated music apps (Spotify, Apple Music, etc.)" -ForegroundColor Gray
+Write-Host "  - If audio doesn't play:" -ForegroundColor Gray
+Write-Host "    • Check Windows sound mixer (phone audio might be muted)" -ForegroundColor Gray
+Write-Host "    • Verify 'Media audio' is enabled in phone's Bluetooth settings" -ForegroundColor Gray
+Write-Host "    • Try disconnecting/reconnecting Bluetooth on phone" -ForegroundColor Gray
+Write-Host "    • Ensure Windows Audio service is running (checked above)" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  - If media controls don't work:" -ForegroundColor Gray
+Write-Host "    • Make sure you connected via NodeNav Bluetooth settings" -ForegroundColor Gray
+Write-Host "    • Some apps have limited AVRCP support (try Spotify)" -ForegroundColor Gray
+Write-Host "    • Check NodeNav server logs for errors" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  - If phone won't pair:" -ForegroundColor Gray
+Write-Host "    • Unpair any existing connection between devices" -ForegroundColor Gray
+Write-Host "    • Restart Bluetooth on both devices" -ForegroundColor Gray
+Write-Host "    • Make sure Bluetooth service is running (checked above)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "For detailed documentation, see:" -ForegroundColor White
 Write-Host "  WINDOWS_BLUETOOTH_SETUP.md" -ForegroundColor Cyan

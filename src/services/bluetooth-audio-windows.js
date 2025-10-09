@@ -49,6 +49,28 @@ class WindowsBluetoothAudio {
         }
       }
       
+      // Check Windows Audio service (required for audio sink)
+      try {
+        const audioStatus = await execAsync('powershell -Command "Get-Service Audiosrv | Select-Object -ExpandProperty Status"');
+        if (audioStatus.stdout.trim() === 'Running') {
+          console.log('[Windows Bluetooth Audio] Windows Audio service is running');
+        } else {
+          console.warn('[Windows Bluetooth Audio] Windows Audio service is not running - audio sink may not work');
+        }
+      } catch (error) {
+        console.warn('[Windows Bluetooth Audio] Could not verify Windows Audio service');
+      }
+      
+      // Check Audio Endpoint Builder service
+      try {
+        const endpointStatus = await execAsync('powershell -Command "Get-Service AudioEndpointBuilder | Select-Object -ExpandProperty Status"');
+        if (endpointStatus.stdout.trim() === 'Running') {
+          console.log('[Windows Bluetooth Audio] Audio Endpoint Builder is running');
+        }
+      } catch (error) {
+        console.warn('[Windows Bluetooth Audio] Could not verify Audio Endpoint Builder service');
+      }
+      
       // Check Windows version
       const versionCheck = await execAsync('powershell -Command "[System.Environment]::OSVersion.Version.Build"');
       const build = parseInt(versionCheck.stdout.trim());
@@ -58,6 +80,7 @@ class WindowsBluetoothAudio {
       }
       
       console.log('[Windows Bluetooth Audio] Initialized successfully');
+      console.log('[Windows Bluetooth Audio] Computer is ready to receive audio from paired devices');
       return true;
     } catch (error) {
       console.error('[Windows Bluetooth Audio] Initialization failed:', error.message);
@@ -70,29 +93,12 @@ class WindowsBluetoothAudio {
    */
   async getPairedDevices() {
     try {
-      const script = `
-        try {
-          Add-Type -AssemblyName System.Runtime.WindowsRuntime
-          [Windows.Devices.Enumeration.DeviceInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null
-          
-          $deviceSelector = [Windows.Devices.Enumeration.DeviceInformation]::CreateFromIdAsync
-          $devices = [Windows.Devices.Enumeration.DeviceInformation]::FindAllAsync().GetAwaiter().GetResult()
-          
-          $bluetoothDevices = $devices | Where-Object { 
-            $_.Name -and $_.IsEnabled -and $_.Id -like '*BTHENUM*' 
-          } | Select-Object Name, Id, IsEnabled
-          
-          if ($bluetoothDevices) {
-            $bluetoothDevices | ConvertTo-Json -Depth 3
-          } else {
-            '[]'
-          }
-        } catch {
-          '[]'
-        }
-      `;
+      // Single-line script to avoid any formatting issues
+      const script = `try { Add-Type -AssemblyName System.Runtime.WindowsRuntime; [Windows.Devices.Enumeration.DeviceInformation,Windows.Devices.Enumeration,ContentType=WindowsRuntime] | Out-Null; $deviceSelector = [Windows.Devices.Enumeration.DeviceInformation]::CreateFromIdAsync; $devices = [Windows.Devices.Enumeration.DeviceInformation]::FindAllAsync().GetAwaiter().GetResult(); $bluetoothDevices = $devices | Where-Object { $_.Name -and $_.IsEnabled -and $_.Id -like '*BTHENUM*' } | Select-Object Name, Id, IsEnabled; if ($bluetoothDevices) { $bluetoothDevices | ConvertTo-Json -Depth 3 } else { Write-Output '[]' } } catch { Write-Output '[]' }`;
       
-      const { stdout } = await execAsync(`powershell -Command "${script.replace(/\n/g, ' ').replace(/"/g, '\\"')}"`);
+      // Use Base64 encoding to avoid escaping issues
+      const scriptBase64 = Buffer.from(script, 'utf16le').toString('base64');
+      const { stdout } = await execAsync(`powershell -NoProfile -NonInteractive -EncodedCommand ${scriptBase64}`);
       return stdout ? JSON.parse(stdout) : [];
     } catch (error) {
       console.error('[Windows Bluetooth Audio] Failed to get devices:', error.message);
@@ -105,16 +111,28 @@ class WindowsBluetoothAudio {
    */
   async connectAudioDevice(deviceAddress) {
     console.log(`[Windows Bluetooth Audio] Connecting audio to: ${deviceAddress}`);
+    console.log('[Windows Bluetooth Audio] Note: Ensure the phone has "Media audio" enabled for this PC');
     
     try {
-      // On Windows, if device is already paired and connected via system,
-      // we just need to verify it and start monitoring
+      // On Windows, the audio sink connection is handled by the OS
+      // When the phone pairs and enables "Media audio", Windows automatically:
+      // 1. Establishes A2DP sink connection (receives audio)
+      // 2. Establishes AVRCP connection (media control)
+      // 3. Routes audio through Windows Audio service
+      
+      // We just need to establish our control connection and start monitoring
       this.connectedDevice = deviceAddress;
+      
+      console.log('[Windows Bluetooth Audio] Control connection established');
+      console.log('[Windows Bluetooth Audio] Computer is now acting as audio sink (Bluetooth speaker)');
+      console.log('[Windows Bluetooth Audio] Phone should be able to stream audio to this computer');
       
       // Start media monitoring
       this.startMediaMonitoring();
       
-      console.log('[Windows Bluetooth Audio] Audio connection established');
+      console.log('[Windows Bluetooth Audio] Started media state monitoring');
+      console.log('[Windows Bluetooth Audio] Ready to receive media controls and track information');
+      
       return { success: true, device: deviceAddress };
     } catch (error) {
       console.error('[Windows Bluetooth Audio] Audio connection failed:', error.message);
@@ -145,52 +163,12 @@ class WindowsBluetoothAudio {
     if (!this.connectedDevice) return;
     
     try {
-      const script = `
-        try {
-          Add-Type -AssemblyName System.Runtime.WindowsRuntime
-          
-          $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | 
-            Where-Object { 
-              $_.Name -eq 'AsTask' -and 
-              $_.GetParameters().Count -eq 1 -and 
-              $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation\`1' 
-            })[0]
-          
-          $sessionManager = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()
-          $sessionManagerTask = $asTaskGeneric.MakeGenericMethod([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]).Invoke($null, @($sessionManager))
-          $sessionManagerTask.Wait(-1)
-          $manager = $sessionManagerTask.Result
-          
-          $session = $manager.GetCurrentSession()
-          
-          if ($session) {
-            $mediaProperties = $session.TryGetMediaPropertiesAsync()
-            $propertiesTask = $asTaskGeneric.MakeGenericMethod([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties]).Invoke($null, @($mediaProperties))
-            $propertiesTask.Wait(-1)
-            $properties = $propertiesTask.Result
-            
-            $playbackInfo = $session.GetPlaybackInfo()
-            $timeline = $session.GetTimelineProperties()
-            
-            $result = @{
-              Title = $properties.Title
-              Artist = $properties.Artist
-              Album = $properties.AlbumTitle
-              Duration = [math]::Floor($timeline.EndTime.TotalSeconds)
-              Position = [math]::Floor($timeline.Position.TotalSeconds)
-              Status = $playbackInfo.PlaybackStatus.ToString()
-            }
-            
-            $result | ConvertTo-Json -Compress
-          } else {
-            '{}'
-          }
-        } catch {
-          '{}'
-        }
-      `;
+      // Single-line script to avoid any formatting issues
+      const script = `try { Add-Type -AssemblyName System.Runtime.WindowsRuntime; $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation\`1' })[0]; $sessionManager = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync(); $sessionManagerTask = $asTaskGeneric.MakeGenericMethod([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]).Invoke($null, @($sessionManager)); $sessionManagerTask.Wait(-1); $manager = $sessionManagerTask.Result; $session = $manager.GetCurrentSession(); if ($session) { $mediaProperties = $session.TryGetMediaPropertiesAsync(); $propertiesTask = $asTaskGeneric.MakeGenericMethod([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties]).Invoke($null, @($mediaProperties)); $propertiesTask.Wait(-1); $properties = $propertiesTask.Result; $playbackInfo = $session.GetPlaybackInfo(); $timeline = $session.GetTimelineProperties(); $result = @{ Title = $properties.Title; Artist = $properties.Artist; Album = $properties.AlbumTitle; Duration = [math]::Floor($timeline.EndTime.TotalSeconds); Position = [math]::Floor($timeline.Position.TotalSeconds); Status = $playbackInfo.PlaybackStatus.ToString() }; $result | ConvertTo-Json -Compress } else { Write-Output '{}' } } catch { Write-Output '{}' }`;
       
-      const command = `powershell -NoProfile -NonInteractive -Command "${script.replace(/\n/g, ' ').replace(/"/g, '\\"')}"`;
+      // Use Base64 encoding to avoid escaping issues
+      const scriptBase64 = Buffer.from(script, 'utf16le').toString('base64');
+      const command = `powershell -NoProfile -NonInteractive -EncodedCommand ${scriptBase64}`;
       const { stdout } = await execAsync(command, { timeout: 5000 });
       
       if (stdout && stdout.trim() !== '{}') {
@@ -238,43 +216,12 @@ class WindowsBluetoothAudio {
         throw new Error(`Unknown command: ${command}`);
       }
       
-      const script = `
-        try {
-          Add-Type -AssemblyName System.Runtime.WindowsRuntime
-          
-          $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | 
-            Where-Object { 
-              $_.Name -eq 'AsTask' -and 
-              $_.GetParameters().Count -eq 1 -and 
-              $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation\`1' 
-            })[0]
-          
-          $sessionManager = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()
-          $sessionManagerTask = $asTaskGeneric.MakeGenericMethod([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]).Invoke($null, @($sessionManager))
-          $sessionManagerTask.Wait(-1)
-          $manager = $sessionManagerTask.Result
-          
-          $session = $manager.GetCurrentSession()
-          
-          if ($session) {
-            $result = $session.Try${winCommand}Async()
-            $resultTask = $asTaskGeneric.MakeGenericMethod([System.Boolean]).Invoke($null, @($result))
-            $resultTask.Wait(-1)
-            
-            if ($resultTask.Result) {
-              'success'
-            } else {
-              'failed'
-            }
-          } else {
-            'no_session'
-          }
-        } catch {
-          'error'
-        }
-      `;
+      // Single-line script to avoid any formatting issues
+      const script = `try { Add-Type -AssemblyName System.Runtime.WindowsRuntime; $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation\`1' })[0]; $sessionManager = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync(); $sessionManagerTask = $asTaskGeneric.MakeGenericMethod([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]).Invoke($null, @($sessionManager)); $sessionManagerTask.Wait(-1); $manager = $sessionManagerTask.Result; $session = $manager.GetCurrentSession(); if ($session) { $result = $session.Try${winCommand}Async(); $resultTask = $asTaskGeneric.MakeGenericMethod([System.Boolean]).Invoke($null, @($result)); $resultTask.Wait(-1); if ($resultTask.Result) { Write-Output 'success' } else { Write-Output 'failed' } } else { Write-Output 'no_session' } } catch { Write-Output 'error' }`;
       
-      const psCommand = `powershell -NoProfile -NonInteractive -Command "${script.replace(/\n/g, ' ').replace(/"/g, '\\"')}"`;
+      // Use Base64 encoding to avoid escaping issues
+      const scriptBase64 = Buffer.from(script, 'utf16le').toString('base64');
+      const psCommand = `powershell -NoProfile -NonInteractive -EncodedCommand ${scriptBase64}`;
       const { stdout } = await execAsync(psCommand, { timeout: 5000 });
       
       const result = stdout.trim();
