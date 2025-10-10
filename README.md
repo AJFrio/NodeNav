@@ -83,7 +83,7 @@ The application will be available at `http://localhost:5173`
 
 ## Platform-Specific Setup
 
-### Windows Setup
+### Windows Setup !FUNCTIONALITY IS SPOTTY AT BEST, LINUX IS RECOMMENDED!
 
 1. Run the setup verification script:
 ```powershell
@@ -425,7 +425,7 @@ This project is licensed under the ISC License. See the LICENSE file for details
 
 **AJ Frio**
 
-- GitHub: [@yourusername](https://github.com/yourusername)
+- GitHub: [@AJFrio](https://github.com/AJFrio)
 
 ## Acknowledgments
 
