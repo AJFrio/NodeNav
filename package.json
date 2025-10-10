@@ -30,6 +30,7 @@
     "dbus-next": "^0.10.2",
     "express": "^5.1.0",
     "lucide-react": "^0.545.0",
-    "tailwindcss": "^4.1.14"
+    "tailwindcss": "^4.1.14",
+    "ws": "^8.18.3"
   }
 }

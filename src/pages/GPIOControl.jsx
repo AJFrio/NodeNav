@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { gpioAPI } from '../services/api';
+import { lightsAPI } from '../services/api';
 import { styles, colors } from '../styles';
+import { Zap, Edit2, Check, X } from 'lucide-react';
 
 const GPIOControl = () => {
   const [currentColor, setCurrentColor] = useState({ h: 0, s: 100, l: 50 });
   const [brightness, setBrightness] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Lights management
+  const [lights, setLights] = useState([]);
+  const [expandedLight, setExpandedLight] = useState(null);
+  const [editingLightId, setEditingLightId] = useState(null);
+  const [editingName, setEditingName] = useState('');
+  
+  // Debouncing
+  const colorUpdateTimeout = useRef(null);
+  const brightnessUpdateTimeout = useRef(null);
 
   const canvasRef = useRef(null);
 
@@ -17,6 +28,40 @@ const GPIOControl = () => {
   useEffect(() => {
     drawColorWheel();
   }, [currentColor]);
+
+  // Fetch lights periodically
+  useEffect(() => {
+    const fetchLights = async () => {
+      try {
+        const fetchedLights = await lightsAPI.getAllLights();
+        setLights(fetchedLights);
+      } catch (err) {
+        console.error('Failed to fetch lights:', err);
+      }
+    };
+
+    fetchLights();
+    const interval = setInterval(fetchLights, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Apply color and brightness changes with debouncing
+  useEffect(() => {
+    if (colorUpdateTimeout.current) {
+      clearTimeout(colorUpdateTimeout.current);
+    }
+
+    colorUpdateTimeout.current = setTimeout(() => {
+      applyColorToAllLights();
+    }, 150); // 150ms debounce
+
+    return () => {
+      if (colorUpdateTimeout.current) {
+        clearTimeout(colorUpdateTimeout.current);
+      }
+    };
+  }, [currentColor, brightness]);
 
   const drawColorWheel = () => {
     const canvas = canvasRef.current;
@@ -216,16 +261,68 @@ const GPIOControl = () => {
   // Brightness < 5% = OFF, >= 5% = ON
   const isLightOn = brightness >= 5;
 
-  const applyColor = async () => {
+  const applyColorToAllLights = async () => {
     try {
       // Convert HSL to RGB for backend
       const rgbColor = hslToRgb(currentColor.h, currentColor.s, currentColor.l);
-      await gpioAPI.pwmWrite(2, rgbColor.r);
-      await gpioAPI.pwmWrite(3, rgbColor.g);
-      await gpioAPI.pwmWrite(4, rgbColor.b);
+      const brightnessValue = brightness / 100; // Convert to 0.0-1.0
+      
+      await lightsAPI.setAllLightsColor(rgbColor.r, rgbColor.g, rgbColor.b);
+      await lightsAPI.setAllLightsBrightness(brightnessValue);
     } catch (err) {
-      setError('Failed to apply color');
-      console.error('Error applying color:', err);
+      console.error('Error applying color to all lights:', err);
+    }
+  };
+
+  const handleIdentifyLight = async (unitId) => {
+    try {
+      await lightsAPI.identifyLight(unitId);
+    } catch (err) {
+      setError(`Failed to identify light: ${err.message}`);
+      console.error('Error identifying light:', err);
+    }
+  };
+
+  const handleEditLightName = (light) => {
+    setEditingLightId(light.unitId);
+    setEditingName(light.friendlyName);
+  };
+
+  const handleSaveLightName = async (unitId) => {
+    try {
+      await lightsAPI.setLightName(unitId, editingName);
+      setEditingLightId(null);
+      // Refresh lights list
+      const fetchedLights = await lightsAPI.getAllLights();
+      setLights(fetchedLights);
+    } catch (err) {
+      setError(`Failed to update light name: ${err.message}`);
+      console.error('Error updating light name:', err);
+    }
+  };
+
+  const handleCancelEditName = () => {
+    setEditingLightId(null);
+    setEditingName('');
+  };
+
+  const handleIndividualLightColor = async (unitId, h, s, l) => {
+    try {
+      const rgbColor = hslToRgb(h, s, l);
+      await lightsAPI.setLightColor(unitId, rgbColor.r, rgbColor.g, rgbColor.b);
+    } catch (err) {
+      setError(`Failed to set light color: ${err.message}`);
+      console.error('Error setting individual light color:', err);
+    }
+  };
+
+  const handleIndividualLightBrightness = async (unitId, brightnessPercent) => {
+    try {
+      const brightnessValue = brightnessPercent / 100;
+      await lightsAPI.setLightBrightness(unitId, brightnessValue);
+    } catch (err) {
+      setError(`Failed to set light brightness: ${err.message}`);
+      console.error('Error setting individual light brightness:', err);
     }
   };
 
@@ -275,117 +372,312 @@ const GPIOControl = () => {
           padding: '1rem',
           borderRadius: '0.5rem',
           marginBottom: '1.5rem',
-        }}>
+          cursor: 'pointer',
+        }}
+        onClick={() => setError(null)}
+        >
           {error}
         </div>
       )}
 
+      {/* All Lights Control Section */}
       <div style={{
-        display: 'flex',
-        gap: '2rem',
-        alignItems: 'flex-start',
+        ...styles.card,
+        marginBottom: '2rem',
       }}>
-        {/* Color Wheel Section */}
+        <h2 style={{
+          ...styles.typography.h2,
+          color: colors['text-primary'],
+          marginBottom: '1.5rem',
+        }}>All Lights Control</h2>
+        
         <div style={{
-          ...styles.card,
-          textAlign: 'center',
-          flex: 1,
-        }}>
-          <canvas
-            ref={canvasRef}
-            width={300}
-            height={300}
-            onMouseDown={handleColorWheelMouseDown}
-            style={{
-              borderRadius: '50%',
-              cursor: isDragging ? 'grabbing' : 'grab',
-              border: `2px solid ${colors['bg-tertiary']}`,
-              display: 'block',
-              margin: '0 auto 1rem auto',
-            }}
-          />
-        </div>
-
-        {/* Brightness & Controls Section */}
-        <div style={{
-          ...styles.card,
-          textAlign: 'center',
-          width: '200px',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '1.5rem',
+          gap: '2rem',
+          alignItems: 'flex-start',
         }}>
-          <h2 style={{
-            ...styles.typography.h2,
-            color: colors['text-primary'],
-            marginBottom: '2rem',
-          }}>Controls</h2>
-
-          {/* Vertical Brightness Slider */}
+          {/* Color Wheel Section */}
           <div style={{
-            marginBottom: '2rem',
-            width: '100%',
+            textAlign: 'center',
+            flex: 1,
+          }}>
+            <canvas
+              ref={canvasRef}
+              width={300}
+              height={300}
+              onMouseDown={handleColorWheelMouseDown}
+              style={{
+                borderRadius: '50%',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                border: `2px solid ${colors['bg-tertiary']}`,
+                display: 'block',
+                margin: '0 auto',
+              }}
+            />
+          </div>
+
+          {/* Brightness & Controls Section */}
+          <div style={{
+            textAlign: 'center',
+            width: '200px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
           }}>
-            <div
-              style={{
-                width: '40px',
-                height: '200px',
-                backgroundColor: colors['bg-tertiary'],
-                borderRadius: '20px',
-                border: `2px solid ${colors['bg-quaternary']}`,
-                position: 'relative',
-                marginBottom: '1rem',
-                cursor: 'ns-resize',
-              }}
-              onMouseDown={handleBrightnessSliderMouseDown}
-            >
-              {/* Fill from bottom to current brightness level */}
+            <h3 style={{
+              ...styles.typography.h3,
+              color: colors['text-primary'],
+              marginBottom: '1.5rem',
+            }}>Brightness</h3>
+
+            {/* Vertical Brightness Slider */}
+            <div style={{
+              marginBottom: '1.5rem',
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '200px',
+                  backgroundColor: colors['bg-tertiary'],
+                  borderRadius: '20px',
+                  border: `2px solid ${colors['bg-quaternary']}`,
+                  position: 'relative',
+                  marginBottom: '1rem',
+                  cursor: 'ns-resize',
+                }}
+                onMouseDown={handleBrightnessSliderMouseDown}
+              >
+                {/* Fill from bottom to current brightness level */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '0',
+                  left: '0',
+                  right: '0',
+                  height: `${brightness}%`,
+                  backgroundColor: colors['text-primary'],
+                  borderRadius: brightness >= 98 ? '18px' : '0 0 18px 18px',
+                  transition: 'height 0.1s ease-out, border-radius 0.1s ease-out',
+                }} />
+              </div>
+
               <div style={{
-                position: 'absolute',
-                bottom: '0',
-                left: '0',
-                right: '0',
-                height: `${brightness}%`,
-                backgroundColor: colors['text-primary'],
-                borderRadius: brightness >= 98 ? '18px' : '0 0 18px 18px',
-                transition: 'height 0.1s ease-out, border-radius 0.1s ease-out',
-              }} />
+                fontSize: '0.875rem',
+                color: colors['text-secondary'],
+                textAlign: 'center',
+              }}>
+                {brightness}%
+              </div>
             </div>
 
+            {/* Current Settings Display */}
             <div style={{
-              fontSize: '0.875rem',
-              color: colors['text-secondary'],
+              backgroundColor: colors['bg-tertiary'],
+              padding: '1rem',
+              borderRadius: '0.5rem',
               textAlign: 'center',
+              width: '100%',
             }}>
-              {brightness}%
-            </div>
-          </div>
-
-
-          {/* Current Settings Display */}
-          <div style={{
-            backgroundColor: colors['bg-tertiary'],
-            padding: '1rem',
-            borderRadius: '0.5rem',
-            textAlign: 'center',
-            width: '100%',
-          }}>
-            <div style={{
-              fontSize: '0.875rem',
-              color: colors['text-secondary'],
-              lineHeight: '1.5',
-            }}>
-              <div>Status: <span style={{ color: isLightOn ? colors.success : colors.danger }}>
-                {isLightOn ? 'ON' : 'OFF'}
-              </span></div>
-              <div>Brightness: {brightness}%</div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: colors['text-secondary'],
+                lineHeight: '1.5',
+              }}>
+                <div>Status: <span style={{ color: isLightOn ? colors.success : colors.danger }}>
+                  {isLightOn ? 'ON' : 'OFF'}
+                </span></div>
+                <div>Connected: {lights.filter(l => l.connected).length}</div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Individual Lights Section */}
+      <div style={{
+        ...styles.card,
+      }}>
+        <h2 style={{
+          ...styles.typography.h2,
+          color: colors['text-primary'],
+          marginBottom: '1.5rem',
+        }}>Individual Lights</h2>
+
+        {lights.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            color: colors['text-secondary'],
+          }}>
+            <p>No light units connected.</p>
+            <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+              Make sure ESP-01 units are powered on and connected to the NodeNav-Lights network.
+            </p>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '1rem',
+          }}>
+            {lights.map((light) => (
+              <div
+                key={light.unitId}
+                style={{
+                  backgroundColor: colors['bg-tertiary'],
+                  padding: '1rem',
+                  borderRadius: '0.5rem',
+                  border: `2px solid ${light.connected ? colors.success : colors['bg-quaternary']}`,
+                }}
+              >
+                {/* Light Header */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.75rem',
+                }}>
+                  {editingLightId === light.unitId ? (
+                    <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: colors['bg-primary'],
+                          color: colors['text-primary'],
+                          border: `1px solid ${colors['bg-quaternary']}`,
+                          borderRadius: '0.25rem',
+                        }}
+                      />
+                      <button
+                        onClick={() => handleSaveLightName(light.unitId)}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: colors.success,
+                          color: colors['text-primary'],
+                          border: 'none',
+                          borderRadius: '0.25rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button
+                        onClick={handleCancelEditName}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: colors.danger,
+                          color: colors['text-primary'],
+                          border: 'none',
+                          borderRadius: '0.25rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontWeight: 'bold',
+                          color: colors['text-primary'],
+                          marginBottom: '0.25rem',
+                        }}>
+                          {light.friendlyName}
+                        </div>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: colors['text-secondary'],
+                        }}>
+                          {light.unitId.slice(-17)}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleEditLightName(light)}
+                        style={{
+                          padding: '0.5rem',
+                          backgroundColor: colors['bg-quaternary'],
+                          color: colors['text-primary'],
+                          border: 'none',
+                          borderRadius: '0.25rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Color Preview */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '0.75rem',
+                }}>
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '0.5rem',
+                      backgroundColor: `rgb(${light.state.r}, ${light.state.g}, ${light.state.b})`,
+                      border: `2px solid ${colors['bg-quaternary']}`,
+                    }}
+                  />
+                  <div style={{ flex: 1, fontSize: '0.875rem', color: colors['text-secondary'] }}>
+                    <div>RGB: {light.state.r}, {light.state.g}, {light.state.b}</div>
+                    <div>Brightness: {Math.round(light.state.brightness * 100)}%</div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                }}>
+                  <button
+                    onClick={() => handleIdentifyLight(light.unitId)}
+                    disabled={!light.connected}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      backgroundColor: light.connected ? colors['accent-primary'] : colors['bg-quaternary'],
+                      color: colors['text-primary'],
+                      border: 'none',
+                      borderRadius: '0.25rem',
+                      cursor: light.connected ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <Zap size={16} />
+                    Identify
+                  </button>
+                </div>
+
+                {/* Connection Status */}
+                <div style={{
+                  marginTop: '0.75rem',
+                  fontSize: '0.75rem',
+                  color: light.connected ? colors.success : colors.danger,
+                  textAlign: 'center',
+                }}>
+                  {light.connected ? '● Connected' : '● Disconnected'}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
