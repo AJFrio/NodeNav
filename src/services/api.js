@@ -216,7 +216,108 @@ class BluetoothAPI {
   }
 }
 
+/**
+ * Lights API service
+ */
+class LightsAPI {
+  constructor() {
+    this.baseURL = 'http://localhost:3001/api';
+  }
+
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Lights API request failed for ${endpoint}:`, error);
+      throw error;
+    }
+  }
+
+  // Get all lights
+  async getAllLights() {
+    return this.request('/lights');
+  }
+
+  // Get specific light
+  async getLight(unitId) {
+    return this.request(`/lights/${unitId}`);
+  }
+
+  // Set color for all lights
+  async setAllLightsColor(r, g, b) {
+    return this.request('/lights/all/color', {
+      method: 'POST',
+      body: JSON.stringify({ r, g, b }),
+    });
+  }
+
+  // Set brightness for all lights
+  async setAllLightsBrightness(brightness) {
+    return this.request('/lights/all/brightness', {
+      method: 'POST',
+      body: JSON.stringify({ value: brightness }),
+    });
+  }
+
+  // Set color for specific light
+  async setLightColor(unitId, r, g, b) {
+    return this.request(`/lights/${unitId}/color`, {
+      method: 'POST',
+      body: JSON.stringify({ r, g, b }),
+    });
+  }
+
+  // Set brightness for specific light
+  async setLightBrightness(unitId, brightness) {
+    return this.request(`/lights/${unitId}/brightness`, {
+      method: 'POST',
+      body: JSON.stringify({ value: brightness }),
+    });
+  }
+
+  // Trigger identify on specific light
+  async identifyLight(unitId) {
+    return this.request(`/lights/${unitId}/identify`, {
+      method: 'POST',
+    });
+  }
+
+  // Set friendly name for light
+  async setLightName(unitId, name) {
+    return this.request(`/lights/${unitId}/name`, {
+      method: 'PUT',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  // Get command history
+  async getLightsHistory() {
+    return this.request('/lights/history');
+  }
+
+  // Clear command history
+  async clearLightsHistory() {
+    return this.request('/lights/history', {
+      method: 'DELETE',
+    });
+  }
+}
+
 // Export singleton instances
 export const gpioAPI = new GPIOAPI();
 export const bluetoothAPI = new BluetoothAPI();
+export const lightsAPI = new LightsAPI();
 export default gpioAPI;

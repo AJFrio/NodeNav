@@ -1,4 +1,4 @@
-# NodeNav 🚗
+# NodeNav
 
 **Open Source Headunit Interface for Automotive Systems**
 
@@ -6,16 +6,16 @@ A modern, minimalist car headunit interface built with React and Node.js. Contro
 
 ![NodeNav Banner](https://via.placeholder.com/800x200/000000/FFFFFF?text=NodeNav+-+Open+Source+Headunit)
 
-## ✨ Features
+## Features
 
-### 🎵 Bluetooth Media Player
+### Bluetooth Media Player
 - **Full Audio Streaming**: Stream music from your phone to your car's speakers via A2DP
 - **Media Controls**: Play, pause, skip tracks directly from the interface
 - **Live Metadata**: View song title, artist, album, and playback progress in real-time
 - **AVRCP Support**: Full integration with your phone's media apps (Spotify, Apple Music, etc.)
 - **Cross-Platform**: Works on Windows (via PowerShell + WinRT APIs) and Linux (via BlueZ)
 
-### 📡 Bluetooth Device Management
+### Bluetooth Device Management
 - **Device Discovery**: Scan for nearby Bluetooth devices with live updates
 - **Pairing & Connection**: Easy device pairing and connection management directly from the app
 - **Native Platform Support**: BlueZ/D-Bus on Linux, PowerShell/WMI on Windows
@@ -24,21 +24,21 @@ A modern, minimalist car headunit interface built with React and Node.js. Contro
 - **History Tracking**: Monitor all Bluetooth operations with detailed logs
 - **No System Settings Required**: Complete device management without leaving the app!
 
-### ⚡ GPIO Control
+### GPIO Control
 - **Hardware Pin Control**: Control GPIO pins on Raspberry Pi and similar devices
 - **Multiple Modes**: Support for INPUT, OUTPUT, and PWM modes
 - **Real-time Monitoring**: Live status updates for all configured pins
 - **PWM Support**: Control LED brightness, motor speeds, and more
 - **Command History**: Track all GPIO operations for debugging
 
-### 🎨 Modern UI/UX
+### Modern UI/UX
 - **Minimalist Black Theme**: High-contrast design optimized for automotive use
 - **Touch-Friendly**: Large buttons and controls designed for gloves and on-the-go use
 - **Responsive Layout**: Adapts to different screen sizes and orientations
 - **Bottom Navigation**: Quick access to all major features
 - **No Scrolling**: All content fits on screen for safe driving
 
-## 🖥️ Screenshots
+## Screenshots
 
 ### Home Screen
 Clean, organized home screen with quick access cards for all major features.
@@ -52,7 +52,7 @@ Comprehensive Bluetooth management with device scanning, pairing, and connection
 ### GPIO Control
 Intuitive GPIO pin control with real-time status indicators.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -81,9 +81,9 @@ npm run dev
 
 The application will be available at `http://localhost:5173`
 
-## 📱 Platform-Specific Setup
+## Platform-Specific Setup
 
-### Windows Setup
+### Windows Setup !FUNCTIONALITY IS SPOTTY AT BEST, LINUX IS RECOMMENDED!
 
 1. Run the setup verification script:
 ```powershell
@@ -102,11 +102,11 @@ The application will be available at `http://localhost:5173`
 - Bluetooth service running
 - PowerShell (included with Windows)
 
-**📖 Detailed Guide**: See [WINDOWS_TESTING_GUIDE.md](WINDOWS_TESTING_GUIDE.md)
+**Detailed Guide**: See [WINDOWS_TESTING_GUIDE.md](WINDOWS_TESTING_GUIDE.md)
 
 ### Linux Setup
 
-**🎉 NEW: Full native Bluetooth device management!** Connect to devices directly from the app using BlueZ/D-Bus - no system settings required!
+**NEW: Full native Bluetooth device management!** Connect to devices directly from the app using BlueZ/D-Bus - no system settings required!
 
 1. Ensure BlueZ is running:
 ```bash
@@ -144,7 +144,7 @@ chmod +x setup-bluetooth-audio.sh
 - D-Bus (pre-installed)
 - PulseAudio 10.0+ or PipeWire 0.3+ (for audio streaming)
 
-**📖 Detailed Guides**: 
+**Detailed Guides**: 
 - [LINUX_BLUETOOTH_GUIDE.md](LINUX_BLUETOOTH_GUIDE.md) - Device management (NEW!)
 - [BLUETOOTH_AUDIO_SETUP.md](BLUETOOTH_AUDIO_SETUP.md) - Audio streaming setup
 
@@ -159,7 +159,7 @@ For GPIO functionality on Raspberry Pi:
 
 **Note**: GPIO functionality requires running on compatible hardware.
 
-## 🎯 Usage
+## Usage
 
 ### Connecting Your Phone
 
@@ -187,13 +187,13 @@ For GPIO functionality on Raspberry Pi:
 ### Navigation
 
 Use the bottom navigation bar to quickly switch between:
-- 🏠 **Home**: Quick access to all features
-- ⚡ **GPIO Control**: Hardware pin management
-- 🗺️ **Navigation**: GPS routing (coming soon)
-- 🎵 **Media**: Bluetooth audio player
-- ⚙️ **Settings**: System configuration
+- **Home**: Quick access to all features
+- **GPIO Control**: Hardware pin management
+- **Navigation**: GPS routing (coming soon)
+- **Media**: Bluetooth audio player
+- **Settings**: System configuration
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -285,7 +285,7 @@ NodeNav/
 └── README.md
 ```
 
-## 🔧 Development
+## Development
 
 ### Running in Development Mode
 
@@ -320,7 +320,7 @@ npm run start
 - `npm run electron-dev` - Run Electron in dev mode
 - `npm start` - Build and run Electron app
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Bluetooth Issues
 
@@ -355,16 +355,16 @@ npm run start
   - [LINUX_BLUETOOTH_IMPLEMENTATION.md](LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!**
   - [BLUETOOTH_AUDIO_IMPLEMENTATION.md](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
 
-## 🌟 Features Roadmap
+## Features Roadmap
 
 ### Current Version (1.0.0)
-- ✅ Bluetooth device management
-- ✅ Bluetooth audio streaming (A2DP)
-- ✅ Media playback control (AVRCP)
-- ✅ Live track metadata
-- ✅ GPIO pin control
-- ✅ Minimalist UI theme
-- ✅ Cross-platform support (Windows/Linux)
+- Bluetooth device management
+- Bluetooth audio streaming (A2DP)
+- Media playback control (AVRCP)
+- Live track metadata
+- GPIO pin control
+- Minimalist UI theme
+- Cross-platform support (Windows/Linux)
 
 ### Upcoming Features
 
@@ -399,7 +399,7 @@ npm run start
 - [ ] Widget system
 - [ ] Multi-language support
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Here's how you can help:
 
@@ -417,17 +417,17 @@ Contributions are welcome! Here's how you can help:
 - Test on both Windows and Linux if possible
 - Keep the UI minimalist and touch-friendly
 
-## 📝 License
+## License
 
 This project is licensed under the ISC License. See the LICENSE file for details.
 
-## 👤 Author
+## Author
 
 **AJ Frio**
 
-- GitHub: [@yourusername](https://github.com/yourusername)
+- GitHub: [@AJFrio](https://github.com/AJFrio)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **BlueZ Project** - Linux Bluetooth stack
 - **PulseAudio/PipeWire** - Audio routing on Linux
@@ -438,7 +438,7 @@ This project is licensed under the ISC License. See the LICENSE file for details
 - **Lucide** - Beautiful icon set
 - **Electron** - Cross-platform desktop apps
 
-## 📚 Documentation
+## Documentation
 
 - [Main README](README.md) - This file
 - [Linux Bluetooth Guide](LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Device management on Linux
@@ -448,13 +448,13 @@ This project is licensed under the ISC License. See the LICENSE file for details
 - [Windows Testing Guide](WINDOWS_TESTING_GUIDE.md)
 - [Bluetooth Audio Implementation Details](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
 
-## 🔗 Useful Links
+## Useful Links
 
 - **Report a Bug**: [GitHub Issues](https://github.com/yourusername/NodeNav/issues)
 - **Request a Feature**: [GitHub Issues](https://github.com/yourusername/NodeNav/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/NodeNav/discussions)
 
-## 💡 Use Cases
+## Use Cases
 
 - **DIY Car Headunit**: Replace factory headunit with Raspberry Pi
 - **Classic Car Modernization**: Add modern features to older vehicles
@@ -462,7 +462,7 @@ This project is licensed under the ISC License. See the LICENSE file for details
 - **Learning Platform**: Learn automotive software development
 - **Home Automation Hub**: Repurpose as a control center
 
-## ⚡ Performance
+## Performance
 
 - **Startup Time**: < 3 seconds
 - **UI Response**: Instant (React optimizations)
@@ -470,7 +470,7 @@ This project is licensed under the ISC License. See the LICENSE file for details
 - **Metadata Updates**: Every 2 seconds
 - **Audio Latency**: 100-300ms (Bluetooth standard)
 
-## 🔒 Security
+## Security
 
 - No external API calls for media streaming
 - Local-only Bluetooth connections
@@ -478,17 +478,17 @@ This project is licensed under the ISC License. See the LICENSE file for details
 - All data stays on your device
 - Open source - audit the code yourself
 
-## 🌐 Platform Support
+## Platform Support
 
 | Feature | Windows 10/11 | Linux | macOS | Raspberry Pi |
 |---------|---------------|-------|-------|--------------|
-| Media Player | ✅ Full | ✅ Full | ⚠️ Planned | ✅ Full |
-| Bluetooth Device Mgmt | ✅ Native | ✅ **Native (NEW!)** | ⚠️ Planned | ✅ Native |
-| Bluetooth Audio | ✅ Full | ✅ Full | ⚠️ Planned | ✅ Full |
-| GPIO | ❌ N/A | ✅ Full | ❌ N/A | ✅ Full |
-| UI | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Media Player | Full | Full | Planned | Full |
+| Bluetooth Device Mgmt | Native | **Native (NEW!)** | Planned | Native |
+| Bluetooth Audio | Full | Full | Planned | Full |
+| GPIO | N/A | Full | N/A | Full |
+| UI | Full | Full | Full | Full |
 
-## 💬 Support
+## Support
 
 Need help? Here's how to get support:
 
@@ -501,9 +501,9 @@ Need help? Here's how to get support:
 
 <div align="center">
 
-**Made with ❤️ for the automotive community**
+**Made with love for the automotive community**
 
-⭐ Star this repo if you find it useful!
+Star this repo if you find it useful!
 
 [Report Bug](https://github.com/yourusername/NodeNav/issues) · [Request Feature](https://github.com/yourusername/NodeNav/issues) · [Documentation](docs/)
 
