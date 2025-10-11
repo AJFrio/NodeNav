@@ -46,16 +46,15 @@ function createWindow() {
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(async () => {
+  // Create the main window immediately; UI shows loading overlay until backend ready
+  createWindow();
   try {
-    // Start the backend server
+    // Start the backend server (non-blocking for UI)
     await startServer();
     console.log('Backend server started successfully');
-
-    // Create the main window
-    createWindow();
   } catch (error) {
     console.error('Failed to start backend server:', error);
-    app.quit();
+    // Keep UI open; readiness overlay will remain until services respond
   }
 })
 

@@ -231,10 +231,311 @@ const BluetoothSettings = () => {
         </div>
       )}
 
+      {/* Connected Devices - move to top */}
+      <div style={{ marginTop: '0.5rem' }}>
+        <h2 style={{
+          ...styles.typography.h2,
+          color: colors['text-primary'],
+          marginBottom: '1rem',
+        }}>Connected Devices</h2>
+
+        {loading ? (
+          <div style={{
+            color: colors['text-secondary'],
+            textAlign: 'center',
+            padding: '2rem',
+          }}>Loading...</div>
+        ) : connectedDevices.length === 0 ? (
+          <div style={{
+            ...styles.card,
+            padding: '2rem',
+            textAlign: 'center',
+            color: colors['text-secondary'],
+          }}>
+            No devices connected
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '1rem',
+          }}>
+            {connectedDevices.map((device) => (
+              <div key={device.address} style={styles.card}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.75rem',
+                }}>
+                  <h3 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: colors['text-primary'],
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    marginRight: '0.5rem',
+                  }}>{device.name || device.address}</h3>
+                  <span style={{
+                    padding: '0.125rem 0.5rem',
+                    borderRadius: '0.25rem',
+                    fontSize: '0.75rem',
+                    fontWeight: '500',
+                    backgroundColor: getDeviceStatusColor(device),
+                    color: colors['text-primary'],
+                  }}>
+                    {getDeviceStatusText(device)}
+                  </span>
+                </div>
+
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: colors['text-secondary'],
+                  marginBottom: '0.75rem',
+                }}>
+                  {device.name && device.name !== device.address && (
+                    <div style={{ 
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      marginBottom: '0.25rem'
+                    }}>
+                      {device.address}
+                    </div>
+                  )}
+                  <div>Type: {device.type}</div>
+                  {device.rssi && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                    }}>
+                      <span>{getSignalBars(device.rssi)}</span>
+                      <span>Signal: {device.rssi} dBm ({getSignalStrength(device.rssi)})</span>
+                    </div>
+                  )}
+                  <div style={{ fontSize: '0.75rem' }}>Last Seen: {formatTime(device.lastSeen)}</div>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                }}>
+                  <button
+                    onClick={() => handleDisconnectDevice(device.address)}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem 0.75rem',
+                      backgroundColor: '#000000',
+                      color: '#ffffff',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'background-color 150ms ease-in-out',
+                      border: 'none',
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
+                  >
+                    Disconnect
+                  </button>
+
+                  <button
+                    onClick={() => handleUnpairDevice(device.address)}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem 0.75rem',
+                      backgroundColor: '#000000',
+                      color: '#ffffff',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'background-color 150ms ease-in-out',
+                      border: 'none',
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
+                  >
+                    Unpair
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Available Devices - only show while discovery/scanning is active */}
+      {(adapterInfo?.discovering || isScanning) && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <h2 style={{
+            ...styles.typography.h2,
+            color: colors['text-primary'],
+            marginBottom: '1rem',
+          }}>Available Devices (Top 5 by Signal)</h2>
+
+          {loading ? (
+            <div style={{
+              color: colors['text-secondary'],
+              textAlign: 'center',
+              padding: '2rem',
+            }}>Loading...</div>
+          ) : getTopDevicesBySignal(devices).length === 0 ? (
+            <div style={{
+              ...styles.card,
+              padding: '2rem',
+              textAlign: 'center',
+              color: colors['text-secondary'],
+            }}>
+              No devices found yet...
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1rem',
+            }}>
+              {getTopDevicesBySignal(devices).map((device) => (
+                <div key={device.address} style={styles.card}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.75rem',
+                  }}>
+                    <h3 style={{
+                      fontSize: '1.125rem',
+                      fontWeight: '600',
+                      color: colors['text-primary'],
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      marginRight: '0.5rem',
+                    }}>{device.name || device.address}</h3>
+                    <span style={{
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '0.25rem',
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      backgroundColor: getDeviceStatusColor(device),
+                      color: colors['text-primary'],
+                    }}>
+                      {getDeviceStatusText(device)}
+                    </span>
+                  </div>
+
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: colors['text-secondary'],
+                    marginBottom: '0.75rem',
+                  }}>
+                    {device.name && device.name !== device.address && (
+                      <div style={{ 
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        marginBottom: '0.25rem'
+                      }}>
+                        {device.address}
+                      </div>
+                    )}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.25rem'
+                    }}>
+                      <span>{getSignalBars(device.rssi)}</span>
+                      <span>Signal: {device.rssi ? `${device.rssi} dBm (${getSignalStrength(device.rssi)})` : 'Unknown'}</span>
+                    </div>
+                    <div>Type: {device.type}</div>
+                    <div style={{ fontSize: '0.75rem' }}>Last Seen: {formatTime(device.lastSeen)}</div>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                  }}>
+                    {!device.paired ? (
+                      <button
+                        onClick={() => handlePairDevice(device.address)}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem 0.75rem',
+                          backgroundColor: colors.primary,
+                          color: colors['text-primary'],
+                          borderRadius: '0.375rem',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'background-color 150ms ease-in-out',
+                          border: 'none',
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = colors['primary-hover']}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = colors.primary}
+                      >
+                        Pair
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleConnectDevice(device.address)}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem 0.75rem',
+                          backgroundColor: colors.success,
+                          color: colors['text-primary'],
+                          borderRadius: '0.375rem',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'background-color 150ms ease-in-out',
+                          border: 'none',
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = colors['success-hover']}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = colors.success}
+                      >
+                        Connect
+                      </button>
+                    )}
+
+                    {device.paired && (
+                      <button
+                        onClick={() => handleUnpairDevice(device.address)}
+                        style={{
+                        flex: 1,
+                        padding: '0.5rem 0.75rem',
+                        backgroundColor: '#000000',
+                        color: '#ffffff',
+                        borderRadius: '0.375rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'background-color 150ms ease-in-out',
+                        border: 'none',
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
+                      >
+                        Unpair
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Adapter + Discovery moved to bottom */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
         gap: '1.5rem',
+        marginTop: '1.5rem',
       }}>
         {/* Bluetooth Adapter Info */}
         <div style={styles.card}>
@@ -430,303 +731,6 @@ const BluetoothSettings = () => {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Connected Devices */}
-      <div style={{ marginTop: '1.5rem' }}>
-        <h2 style={{
-          ...styles.typography.h2,
-          color: colors['text-primary'],
-          marginBottom: '1rem',
-        }}>Connected Devices</h2>
-
-        {loading ? (
-          <div style={{
-            color: colors['text-secondary'],
-            textAlign: 'center',
-            padding: '2rem',
-          }}>Loading...</div>
-        ) : connectedDevices.length === 0 ? (
-          <div style={{
-            ...styles.card,
-            padding: '2rem',
-            textAlign: 'center',
-            color: colors['text-secondary'],
-          }}>
-            No devices connected
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '1rem',
-          }}>
-            {connectedDevices.map((device) => (
-              <div key={device.address} style={styles.card}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.75rem',
-                }}>
-                  <h3 style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: colors['text-primary'],
-                    flex: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginRight: '0.5rem',
-                  }}>{device.name || device.address}</h3>
-                  <span style={{
-                    padding: '0.125rem 0.5rem',
-                    borderRadius: '0.25rem',
-                    fontSize: '0.75rem',
-                    fontWeight: '500',
-                    backgroundColor: getDeviceStatusColor(device),
-                    color: colors['text-primary'],
-                  }}>
-                    {getDeviceStatusText(device)}
-                  </span>
-                </div>
-
-                <div style={{
-                  fontSize: '0.875rem',
-                  color: colors['text-secondary'],
-                  marginBottom: '0.75rem',
-                }}>
-                  {device.name && device.name !== device.address && (
-                    <div style={{ 
-                      fontFamily: 'monospace',
-                      fontSize: '0.75rem',
-                      marginBottom: '0.25rem'
-                    }}>
-                      {device.address}
-                    </div>
-                  )}
-                  <div>Type: {device.type}</div>
-                  {device.rssi && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                    }}>
-                      <span>{getSignalBars(device.rssi)}</span>
-                      <span>Signal: {device.rssi} dBm ({getSignalStrength(device.rssi)})</span>
-                    </div>
-                  )}
-                  <div style={{ fontSize: '0.75rem' }}>Last Seen: {formatTime(device.lastSeen)}</div>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                }}>
-                  <button
-                    onClick={() => handleDisconnectDevice(device.address)}
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem 0.75rem',
-                      backgroundColor: '#000000',
-                      color: '#ffffff',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'background-color 150ms ease-in-out',
-                      border: 'none',
-                    }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
-                  >
-                    Disconnect
-                  </button>
-
-                  <button
-                    onClick={() => handleUnpairDevice(device.address)}
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem 0.75rem',
-                      backgroundColor: '#000000',
-                      color: '#ffffff',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'background-color 150ms ease-in-out',
-                      border: 'none',
-                    }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
-                  >
-                    Unpair
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Available Devices */}
-      <div style={{ marginTop: '1.5rem' }}>
-        <h2 style={{
-          ...styles.typography.h2,
-          color: colors['text-primary'],
-          marginBottom: '1rem',
-        }}>Available Devices (Top 5 by Signal)</h2>
-
-        {loading ? (
-          <div style={{
-            color: colors['text-secondary'],
-            textAlign: 'center',
-            padding: '2rem',
-          }}>Loading...</div>
-        ) : getTopDevicesBySignal(devices).length === 0 ? (
-          <div style={{
-            ...styles.card,
-            padding: '2rem',
-            textAlign: 'center',
-            color: colors['text-secondary'],
-          }}>
-            No devices found. Try starting a scan.
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '1rem',
-          }}>
-            {getTopDevicesBySignal(devices).map((device) => (
-              <div key={device.address} style={styles.card}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.75rem',
-                }}>
-                  <h3 style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: colors['text-primary'],
-                    flex: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginRight: '0.5rem',
-                  }}>{device.name || device.address}</h3>
-                  <span style={{
-                    padding: '0.125rem 0.5rem',
-                    borderRadius: '0.25rem',
-                    fontSize: '0.75rem',
-                    fontWeight: '500',
-                    backgroundColor: getDeviceStatusColor(device),
-                    color: colors['text-primary'],
-                  }}>
-                    {getDeviceStatusText(device)}
-                  </span>
-                </div>
-
-                <div style={{
-                  fontSize: '0.875rem',
-                  color: colors['text-secondary'],
-                  marginBottom: '0.75rem',
-                }}>
-                  {device.name && device.name !== device.address && (
-                    <div style={{ 
-                      fontFamily: 'monospace',
-                      fontSize: '0.75rem',
-                      marginBottom: '0.25rem'
-                    }}>
-                      {device.address}
-                    </div>
-                  )}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    marginBottom: '0.25rem'
-                  }}>
-                    <span>{getSignalBars(device.rssi)}</span>
-                    <span>Signal: {device.rssi ? `${device.rssi} dBm (${getSignalStrength(device.rssi)})` : 'Unknown'}</span>
-                  </div>
-                  <div>Type: {device.type}</div>
-                  <div style={{ fontSize: '0.75rem' }}>Last Seen: {formatTime(device.lastSeen)}</div>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                }}>
-                  {!device.paired ? (
-                    <button
-                      onClick={() => handlePairDevice(device.address)}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem 0.75rem',
-                        backgroundColor: colors.primary,
-                        color: colors['text-primary'],
-                        borderRadius: '0.375rem',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'background-color 150ms ease-in-out',
-                        border: 'none',
-                      }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = colors['primary-hover']}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = colors.primary}
-                    >
-                      Pair
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleConnectDevice(device.address)}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem 0.75rem',
-                        backgroundColor: colors.success,
-                        color: colors['text-primary'],
-                        borderRadius: '0.375rem',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'background-color 150ms ease-in-out',
-                        border: 'none',
-                      }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = colors['success-hover']}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = colors.success}
-                    >
-                      Connect
-                    </button>
-                  )}
-
-                  {device.paired && (
-                    <button
-                      onClick={() => handleUnpairDevice(device.address)}
-                      style={{
-                      flex: 1,
-                      padding: '0.5rem 0.75rem',
-                      backgroundColor: '#000000',
-                      color: '#ffffff',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'background-color 150ms ease-in-out',
-                      border: 'none',
-                    }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1a1a1a'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
-                    >
-                      Unpair
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

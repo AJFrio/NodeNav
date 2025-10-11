@@ -14,11 +14,29 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
-// Initialize services
-gpioService.initialize().catch(console.error);
-bluetoothService.initialize().catch(console.error);
-bluetoothAudioService.initialize().catch(console.error);
-lightsService.initialize(server).catch(console.error);
+// Initialize services with readiness tracking
+const readiness = {
+  gpio: false,
+  bluetooth: false,
+  bluetoothAudio: false,
+  lights: false,
+};
+
+gpioService.initialize()
+  .then(() => { readiness.gpio = true; })
+  .catch(console.error);
+
+bluetoothService.initialize()
+  .then(() => { readiness.bluetooth = true; })
+  .catch(console.error);
+
+bluetoothAudioService.initialize()
+  .then(() => { readiness.bluetoothAudio = true; })
+  .catch(console.error);
+
+lightsService.initialize(server)
+  .then(() => { readiness.lights = true; })
+  .catch(console.error);
 
 /**
  * GET /api/pins - Get all pin states
@@ -147,6 +165,18 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     gpioMode: 'logging'
+  });
+});
+
+/**
+ * Readiness endpoint - indicates when all services finished initializing
+ */
+app.get('/api/readiness', (req, res) => {
+  const ready = readiness.gpio && readiness.bluetooth && readiness.bluetoothAudio && readiness.lights;
+  res.json({
+    ready,
+    services: { ...readiness },
+    timestamp: new Date().toISOString(),
   });
 });
 

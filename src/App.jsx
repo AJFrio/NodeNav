@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import GPIOControl from './pages/GPIOControl';
 import BluetoothSettings from './pages/BluetoothSettings';
 import MediaPlayer from './pages/MediaPlayer';
@@ -7,6 +7,7 @@ import HomeScreenCard from './components/HomeScreenCard';
 import SettingsButton from './components/SettingsButton';
 import NavigationItem from './components/NavigationItem';
 import { styles, colors } from './styles';
+import { systemAPI } from './services/api';
 import {
   Home,
   Lightbulb,
@@ -20,6 +21,32 @@ import {
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
+  const [isBackendReady, setIsBackendReady] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    let cancelled = false;
+
+    const pollReadiness = async () => {
+      try {
+        const readiness = await systemAPI.getReadiness();
+        if (!cancelled && readiness?.ready) {
+          setIsBackendReady(true);
+          clearInterval(interval);
+        }
+      } catch (_err) {
+        // Backend not up yet; keep polling
+      }
+    };
+
+    pollReadiness();
+    interval = setInterval(pollReadiness, 1000);
+
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
+  }, []);
 
   const navigationItems = [
     { id: 'home', label: 'Home', icon: Home },
@@ -135,14 +162,6 @@ function App() {
               maxWidth: '50rem',
               width: '100%',
             }}>
-              <p style={{
-                fontSize: '1.125rem',
-                color: colors['text-secondary'],
-                marginBottom: '3rem',
-                fontWeight: '300',
-              }}>
-                Open Source Headunit Interface
-              </p>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
@@ -202,11 +221,39 @@ function App() {
       <main style={{
         height: '100%',
         paddingBottom: '5rem', // Account for bottom navbar
-        overflowY: 'auto',
+        overflowY: currentView === 'home' ? 'hidden' : 'auto',
         overflowX: 'hidden',
       }}>
         {renderView()}
       </main>
+
+      {/* Loading overlay */}
+      {!isBackendReady && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: colors['bg-primary'],
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            textAlign: 'center',
+          }}>
+            <div style={{
+              width: '3rem',
+              height: '3rem',
+              borderRadius: '9999px',
+              border: `4px solid ${colors['bg-tertiary']}`,
+              borderTopColor: colors.primary,
+              margin: '0 auto 1rem auto',
+              animation: 'spin 1s linear infinite',
+            }} />
+            <div style={{ color: colors['text-secondary'] }}>Starting services...</div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation Bar */}
       <nav style={styles.navigation.bottombar}>

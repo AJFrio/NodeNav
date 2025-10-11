@@ -321,3 +321,35 @@ export const gpioAPI = new GPIOAPI();
 export const bluetoothAPI = new BluetoothAPI();
 export const lightsAPI = new LightsAPI();
 export default gpioAPI;
+
+/**
+ * System/Readiness API service
+ */
+class SystemAPI {
+  constructor() {
+    this.baseURL = 'http://localhost:3001/api';
+  }
+
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    const response = await fetch(url, config);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  }
+
+  async getReadiness() {
+    return this.request('/readiness');
+  }
+}
+
+export const systemAPI = new SystemAPI();
