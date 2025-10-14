@@ -30,6 +30,13 @@
 
 using namespace websockets;
 
+// Debug configuration (set to false to disable Serial logging and enable BLUE_PIN PWM)
+bool debug = true;
+
+#define DEBUG_PRINT(x) do { if (debug) Serial.print(x); } while (0)
+#define DEBUG_PRINTLN(x) do { if (debug) Serial.println(x); } while (0)
+#define DEBUG_PRINTF(...) do { if (debug) Serial.printf(__VA_ARGS__); } while (0)
+
 // Network Configuration
 const char* SSID = "NodeNav-Lights";
 const char* PASSWORD = "NodeNavPassword";
@@ -87,11 +94,13 @@ void checkFactoryReset();
 String getMACAddress();
 
 void setup() {
-  // Initialize Serial (comment out if using GPIO1 for Blue LED)
-  Serial.begin(115200);
-  delay(100);
-  Serial.println("\n\nESP-01 Light Controller");
-  Serial.println("======================");
+  // Initialize Serial when debugging to preserve GPIO1 for logging
+  if (debug) {
+    Serial.begin(115200);
+    delay(100);
+  }
+  DEBUG_PRINTLN("\n\nESP-01 Light Controller");
+  DEBUG_PRINTLN("======================");
   
   // Initialize EEPROM
   EEPROM.begin(EEPROM_SIZE);
@@ -102,7 +111,9 @@ void setup() {
   // Initialize GPIO pins
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
-  // pinMode(BLUE_PIN, OUTPUT); // Uncomment if not using Serial
+  if (!debug) {
+    pinMode(BLUE_PIN, OUTPUT);
+  }
   
   // Set initial LED state (white, full brightness)
   setLEDColor(lightState.r, lightState.g, lightState.b);
@@ -113,7 +124,7 @@ void setup() {
   // Connect to WebSocket server
   connectToWebSocket();
   
-  Serial.println("Setup complete!");
+  DEBUG_PRINTLN("Setup complete!");
 }
 
 void loop() {
@@ -127,7 +138,7 @@ void loop() {
     unsigned long now = millis();
     if (now - lastReconnectAttempt > RECONNECT_INTERVAL) {
       lastReconnectAttempt = now;
-      Serial.println("Attempting to reconnect...");
+      DEBUG_PRINTLN("Attempting to reconnect...");
       
       // Check WiFi connection first
       if (WiFi.status() != WL_CONNECTED) {
@@ -163,8 +174,8 @@ void loop() {
  * Connect to WiFi network
  */
 void connectToWiFi() {
-  Serial.print("Connecting to WiFi: ");
-  Serial.println(SSID);
+  DEBUG_PRINT("Connecting to WiFi: ");
+  DEBUG_PRINTLN(SSID);
   
   WiFi.mode(WIFI_STA);
   WiFi.begin(SSID, PASSWORD);
@@ -172,18 +183,18 @@ void connectToWiFi() {
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
     delay(500);
-    Serial.print(".");
+    DEBUG_PRINT(".");
     attempts++;
   }
   
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi connected!");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-    Serial.print("MAC Address: ");
-    Serial.println(getMACAddress());
+    DEBUG_PRINTLN("\nWiFi connected!");
+    DEBUG_PRINT("IP Address: ");
+    DEBUG_PRINTLN(WiFi.localIP());
+    DEBUG_PRINT("MAC Address: ");
+    DEBUG_PRINTLN(getMACAddress());
   } else {
-    Serial.println("\nWiFi connection failed!");
+    DEBUG_PRINTLN("\nWiFi connection failed!");
   }
 }
 
@@ -192,7 +203,7 @@ void connectToWiFi() {
  */
 void connectToWebSocket() {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi not connected, cannot connect to WebSocket");
+    DEBUG_PRINTLN("WiFi not connected, cannot connect to WebSocket");
     return;
   }
   
@@ -203,8 +214,8 @@ void connectToWebSocket() {
   wsUrl += WS_PORT;
   wsUrl += WS_PATH;
   
-  Serial.print("Connecting to WebSocket: ");
-  Serial.println(wsUrl);
+  DEBUG_PRINT("Connecting to WebSocket: ");
+  DEBUG_PRINTLN(wsUrl);
   
   // Set callbacks
   wsClient.onMessage(onWebSocketMessage);
@@ -214,7 +225,7 @@ void connectToWebSocket() {
   bool connected = wsClient.connect(wsUrl);
   
   if (connected) {
-    Serial.println("WebSocket connected!");
+    DEBUG_PRINTLN("WebSocket connected!");
     isConnected = true;
     
     // Send registration message
@@ -228,12 +239,12 @@ void connectToWebSocket() {
     serializeJson(doc, message);
     wsClient.send(message);
     
-    Serial.println("Registration sent");
+    DEBUG_PRINTLN("Registration sent");
     
     // Blink to indicate successful connection
     identifyBlink();
   } else {
-    Serial.println("WebSocket connection failed!");
+    DEBUG_PRINTLN("WebSocket connection failed!");
     isConnected = false;
   }
 }
@@ -242,16 +253,16 @@ void connectToWebSocket() {
  * Handle incoming WebSocket messages
  */
 void onWebSocketMessage(WebsocketsMessage message) {
-  Serial.print("Received message: ");
-  Serial.println(message.data());
+  DEBUG_PRINT("Received message: ");
+  DEBUG_PRINTLN(message.data());
   
   // Parse JSON
   StaticJsonDocument<512> doc;
   DeserializationError error = deserializeJson(doc, message.data());
   
   if (error) {
-    Serial.print("JSON parsing failed: ");
-    Serial.println(error.c_str());
+    DEBUG_PRINT("JSON parsing failed: ");
+    DEBUG_PRINTLN(error.c_str());
     return;
   }
   
@@ -264,22 +275,22 @@ void onWebSocketMessage(WebsocketsMessage message) {
 void onWebSocketEvent(WebsocketsEvent event, String data) {
   switch (event) {
     case WebsocketsEvent::ConnectionOpened:
-      Serial.println("WebSocket connection opened");
+      DEBUG_PRINTLN("WebSocket connection opened");
       isConnected = true;
       break;
       
     case WebsocketsEvent::ConnectionClosed:
-      Serial.println("WebSocket connection closed");
+      DEBUG_PRINTLN("WebSocket connection closed");
       isConnected = false;
       break;
       
     case WebsocketsEvent::GotPing:
-      Serial.println("Received ping");
+      DEBUG_PRINTLN("Received ping");
       wsClient.pong();
       break;
       
     case WebsocketsEvent::GotPong:
-      Serial.println("Received pong");
+      DEBUG_PRINTLN("Received pong");
       break;
   }
 }
@@ -294,13 +305,13 @@ void handleCommand(JsonDocument& doc) {
     // Check for event-based messages
     const char* event = doc["event"];
     if (event != nullptr && strcmp(event, "registered") == 0) {
-      Serial.println("Successfully registered with server");
+      DEBUG_PRINTLN("Successfully registered with server");
     }
     return;
   }
   
-  Serial.print("Command: ");
-  Serial.println(command);
+  DEBUG_PRINT("Command: ");
+  DEBUG_PRINTLN(command);
   
   if (strcmp(command, "setColor") == 0) {
     JsonObject payload = doc["payload"];
@@ -308,7 +319,7 @@ void handleCommand(JsonDocument& doc) {
     uint8_t g = payload["g"];
     uint8_t b = payload["b"];
     
-    Serial.printf("Setting color: R=%d, G=%d, B=%d\n", r, g, b);
+    DEBUG_PRINTF("Setting color: R=%d, G=%d, B=%d\n", r, g, b);
     
     lightState.r = r;
     lightState.g = g;
@@ -319,18 +330,18 @@ void handleCommand(JsonDocument& doc) {
     JsonObject payload = doc["payload"];
     float brightness = payload["value"];
     
-    Serial.printf("Setting brightness: %.2f\n", brightness);
+    DEBUG_PRINTF("Setting brightness: %.2f\n", brightness);
     
     lightState.brightness = brightness;
     setBrightness(brightness);
     
   } else if (strcmp(command, "identify") == 0) {
-    Serial.println("Identify command received");
+    DEBUG_PRINTLN("Identify command received");
     identifyBlink();
     
   } else {
-    Serial.print("Unknown command: ");
-    Serial.println(command);
+    DEBUG_PRINT("Unknown command: ");
+    DEBUG_PRINTLN(command);
   }
 }
 
@@ -346,10 +357,12 @@ void setLEDColor(uint8_t r, uint8_t g, uint8_t b) {
   // Write PWM values (inverted for common anode, remove inversion for common cathode)
   analogWrite(RED_PIN, adjustedR);
   analogWrite(GREEN_PIN, adjustedG);
-  // analogWrite(BLUE_PIN, adjustedB); // Uncomment if not using Serial
-  
-  Serial.printf("LED set to: R=%d, G=%d, B=%d (brightness: %.2f)\n", 
-                adjustedR, adjustedG, adjustedB, lightState.brightness);
+  if (!debug) {
+    analogWrite(BLUE_PIN, adjustedB);
+  }
+
+  DEBUG_PRINTF("LED set to: R=%d, G=%d, B=%d (brightness: %.2f)\n",
+               adjustedR, adjustedG, adjustedB, lightState.brightness);
 }
 
 /**
@@ -364,7 +377,7 @@ void setBrightness(float brightness) {
  * Blink LED for identification
  */
 void identifyBlink() {
-  Serial.println("Blinking for identification...");
+  DEBUG_PRINTLN("Blinking for identification...");
   
   // Save current state
   uint8_t savedR = lightState.r;
@@ -392,7 +405,7 @@ void identifyBlink() {
   lightState.brightness = savedBrightness;
   setLEDColor(savedR, savedG, savedB);
   
-  Serial.println("Blink complete");
+  DEBUG_PRINTLN("Blink complete");
 }
 
 /**
@@ -404,7 +417,7 @@ void checkFactoryReset() {
   
   if (magic != EEPROM_MAGIC) {
     // First boot, initialize EEPROM
-    Serial.println("First boot detected, initializing EEPROM");
+    DEBUG_PRINTLN("First boot detected, initializing EEPROM");
     EEPROM.write(EEPROM_INITIALIZED_ADDR, EEPROM_MAGIC);
     EEPROM.write(EEPROM_BOOT_COUNT_ADDR, 1);
     EEPROM.put(EEPROM_LAST_BOOT_TIME_ADDR, millis());
@@ -420,16 +433,16 @@ void checkFactoryReset() {
   unsigned long currentTime = millis();
   unsigned long timeSinceLastBoot = currentTime - lastBootTime;
   
-  Serial.printf("Boot count: %d, Time since last boot: %lu ms\n", bootCount, timeSinceLastBoot);
+  DEBUG_PRINTF("Boot count: %d, Time since last boot: %lu ms\n", bootCount, timeSinceLastBoot);
   
   // Check if within factory reset window
   if (timeSinceLastBoot < FACTORY_RESET_WINDOW) {
     bootCount++;
-    Serial.printf("Rapid boot detected, count: %d\n", bootCount);
+    DEBUG_PRINTF("Rapid boot detected, count: %d\n", bootCount);
     
     if (bootCount >= FACTORY_RESET_BOOT_COUNT) {
       // Factory reset triggered!
-      Serial.println("FACTORY RESET TRIGGERED!");
+      DEBUG_PRINTLN("FACTORY RESET TRIGGERED!");
       
       // Blink red rapidly to indicate reset
       for (int i = 0; i < 10; i++) {
@@ -446,7 +459,7 @@ void checkFactoryReset() {
       EEPROM.write(EEPROM_BOOT_COUNT_ADDR, 0);
       EEPROM.commit();
       
-      Serial.println("Factory reset complete. Rebooting...");
+      DEBUG_PRINTLN("Factory reset complete. Rebooting...");
       delay(1000);
       ESP.restart();
     }
