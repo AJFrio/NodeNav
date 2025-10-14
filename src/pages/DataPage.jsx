@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { gpioAPI, bluetoothAPI } from '../services/api';
-import { styles, colors } from '../styles';
+import { styles, getColors } from '../styles';
+import { useTheme } from '../contexts/ThemeContext';
 
 const DataPage = () => {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
   const [lightCommands, setLightCommands] = useState([]);
   const [bluetoothCommands, setBluetoothCommands] = useState([]);
+  const [adapterInfo, setAdapterInfo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -18,12 +22,14 @@ const DataPage = () => {
   const loadAllHistory = async () => {
     try {
       setLoading(true);
-      const [lightHistory, bluetoothHistory] = await Promise.all([
+      const [lightHistory, bluetoothHistory, adapter] = await Promise.all([
         gpioAPI.getCommandHistory(),
-        bluetoothAPI.getBluetoothHistory()
+        bluetoothAPI.getBluetoothHistory(),
+        bluetoothAPI.getAdapterInfo().catch(() => null) // Catch errors to prevent failure
       ]);
       setLightCommands(lightHistory.slice(-10)); // Last 10 commands
       setBluetoothCommands(bluetoothHistory.slice(-10)); // Last 10 commands
+      setAdapterInfo(adapter);
     } catch (err) {
       console.error('Error loading history:', err);
     } finally {
@@ -64,6 +70,84 @@ const DataPage = () => {
         color: colors['text-primary'],
         marginBottom: '2rem',
       }}>Data & Command History</h1>
+
+      {/* Bluetooth Adapter Information */}
+      <div style={{
+        marginBottom: '2rem',
+        backgroundColor: colors['bg-secondary'],
+        border: `1px solid ${colors['bg-tertiary']}`,
+        borderRadius: '0.5rem',
+        padding: '1.5rem',
+        transition: 'background-color 150ms ease-in-out',
+      }}>
+        <h2 style={{
+          ...styles.typography.h2,
+          color: colors['text-primary'],
+          marginBottom: '1rem',
+        }}>Bluetooth Adapter Information</h2>
+
+        {loading ? (
+          <div style={{
+            color: colors['text-secondary'],
+          }}>Loading...</div>
+        ) : adapterInfo ? (
+          <div style={{
+            display: 'grid',
+            gap: '0.75rem',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span style={{ color: colors['text-secondary'] }}>Adapter Available:</span>
+              <span style={{
+                padding: '0.25rem 0.75rem',
+                borderRadius: '0.375rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                backgroundColor: colors.success,
+                color: colors['bg-primary'],
+              }}>
+                Yes
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span style={{ color: colors['text-secondary'] }}>Address:</span>
+              <span style={{
+                color: colors['text-primary'],
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+              }}>
+                {adapterInfo.address}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <span style={{ color: colors['text-secondary'] }}>Adapter Available:</span>
+            <span style={{
+              padding: '0.25rem 0.75rem',
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              backgroundColor: colors.danger,
+              color: colors['bg-primary'],
+            }}>
+              No
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Recent Light Commands */}
       <div style={{

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { styles, colors } from '../styles';
+import { styles, getColors } from '../styles';
+import { useTheme } from '../contexts/ThemeContext';
 import { Play, Pause, SkipBack, SkipForward, Smartphone } from 'lucide-react';
 import { bluetoothAPI } from '../services/api';
 
 const MediaPlayer = () => {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
   // Media state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState({

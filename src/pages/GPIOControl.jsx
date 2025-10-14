@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { lightsAPI } from '../services/api';
-import { styles, colors } from '../styles';
+import { styles, getColors } from '../styles';
+import { useTheme } from '../contexts/ThemeContext';
 import { Zap, Edit2, Check, X } from 'lucide-react';
 
 const GPIOControl = () => {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
   const [currentColor, setCurrentColor] = useState({ h: 0, s: 100, l: 50 });
   const [brightness, setBrightness] = useState(50);
   const [isDragging, setIsDragging] = useState(false);

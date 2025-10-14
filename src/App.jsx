@@ -3,10 +3,13 @@ import GPIOControl from './pages/GPIOControl';
 import BluetoothSettings from './pages/BluetoothSettings';
 import MediaPlayer from './pages/MediaPlayer';
 import DataPage from './pages/DataPage';
+import DisplaySettings from './pages/DisplaySettings';
+import NavigationPage from './pages/NavigationPage';
 import HomeScreenCard from './components/HomeScreenCard';
 import SettingsButton from './components/SettingsButton';
 import NavigationItem from './components/NavigationItem';
-import { styles, colors } from './styles';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { styles, getColors } from './styles';
 import {
   Home,
   Lightbulb,
@@ -15,11 +18,23 @@ import {
   Music,
   BarChart3,
   Settings,
-  Smartphone
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 
-function App() {
-  const [currentView, setCurrentView] = useState('home');
+function AppContent() {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
+  
+  // Load default page from localStorage
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      return localStorage.getItem('nodenav-default-page') || 'home';
+    } catch (error) {
+      console.error('Failed to load default page:', error);
+      return 'home';
+    }
+  });
 
   const navigationItems = [
     { id: 'home', label: 'Home', icon: Home },
@@ -33,6 +48,8 @@ function App() {
     switch (currentView) {
       case 'gpio':
         return <GPIOControl />;
+      case 'navigation':
+        return <NavigationPage />;
       case 'media':
         return <MediaPlayer />;
       case 'settings':
@@ -61,10 +78,10 @@ function App() {
               />
 
               <SettingsButton
-                icon={Settings}
+                icon={Monitor}
                 title="Display"
-                description="Display settings (Coming Soon)"
-                disabled={true}
+                description="Theme and display preferences"
+                onClick={() => setCurrentView('display')}
                 variant="secondary"
               />
 
@@ -79,7 +96,11 @@ function App() {
 
             <div style={{
               marginTop: '2rem',
-              ...styles.card,
+              backgroundColor: colors['bg-secondary'],
+              border: `1px solid ${colors['bg-tertiary']}`,
+              borderRadius: '0.5rem',
+              padding: '1.5rem',
+              transition: 'background-color 150ms ease-in-out',
             }}>
               <h2 style={{
                 ...styles.typography.h2,
@@ -114,6 +135,8 @@ function App() {
         );
       case 'bluetooth':
         return <BluetoothSettings />;
+      case 'display':
+        return <DisplaySettings />;
       case 'data':
         return <DataPage />;
       case 'home':
@@ -162,6 +185,7 @@ function App() {
                   icon={Map}
                   title="Navigation"
                   description="GPS and routing"
+                  onClick={() => setCurrentView('navigation')}
                 />
 
                 <HomeScreenCard
@@ -196,6 +220,7 @@ function App() {
       backgroundColor: colors['bg-primary'],
       color: colors['text-primary'],
       overflow: 'hidden',
+      transition: 'background-color 300ms ease-in-out, color 300ms ease-in-out',
     }}>
 
       {/* Main Content */}
@@ -209,7 +234,12 @@ function App() {
       </main>
 
       {/* Bottom Navigation Bar */}
-      <nav style={styles.navigation.bottombar}>
+      <nav style={{
+        ...styles.navigation.bottombar,
+        backgroundColor: colors['bg-secondary'],
+        borderTop: `1px solid ${colors['bg-tertiary']}`,
+        transition: 'background-color 300ms ease-in-out, border-color 300ms ease-in-out',
+      }}>
         {navigationItems.map((item) => (
           <NavigationItem
             key={item.id}
@@ -222,6 +252,14 @@ function App() {
         ))}
       </nav>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
