@@ -21,7 +21,7 @@ GPIO2 (D4)    →  Green LED PWM (through resistor)
 TX/GPIO1      →  Blue LED PWM (optional, conflicts with Serial debug)
 ```
 
-**Note:** GPIO1 (TX pin) can be used for the Blue channel, but you must disable Serial communication by commenting out all `Serial.begin()` and `Serial.print()` statements in the code.
+**Note:** GPIO1 (TX pin) can be used for the Blue channel when debugging is turned off in the firmware. Set the `debug` variable near the top of `esp01_light_controller.ino` to `false` to disable Serial logging and free the TX pin for the blue PWM output. Set it to `true` when you want Serial logs and are not driving the blue channel.
 
 ## Required Libraries
 
@@ -122,7 +122,7 @@ The ESP-01 includes a factory reset feature activated by rapid power cycling:
 - Verify wiring connections
 - Check that LEDs are common cathode (or adjust code for common anode)
 - Ensure resistors are correctly sized for your LEDs
-- If using GPIO1 for blue, disable Serial debug output
+- If using GPIO1 for blue, set `debug = false` in the firmware so the TX pin is configured for PWM output
 
 ### Module keeps rebooting
 
@@ -134,16 +134,17 @@ The ESP-01 includes a factory reset feature activated by rapid power cycling:
 
 - Make sure baud rate is set to 115200
 - Check USB-to-Serial adapter connections
-- If using GPIO1 for LED, Serial won't work (comment out Serial code)
+- If using GPIO1 for LED, set `debug = false` (Serial logging is automatically disabled)
 
 ## Debugging
 
 To see debug output:
 
-1. Keep GPIO1 (TX) disconnected from LEDs
-2. Connect ESP-01 TX pin to USB-to-Serial RX
-3. Open Serial Monitor at 115200 baud
-4. You'll see connection status, received commands, etc.
+1. Set `debug = true` in `esp01_light_controller.ino`
+2. Keep GPIO1 (TX) disconnected from LEDs
+3. Connect ESP-01 TX pin to USB-to-Serial RX
+4. Open Serial Monitor at 115200 baud
+5. You'll see connection status, received commands, etc.
 
 ## Message Protocol
 
