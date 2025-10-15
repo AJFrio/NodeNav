@@ -47,7 +47,8 @@ function AppContent() {
   const renderView = (viewId) => {
     const isActive = currentView === viewId;
     const commonStyle = {
-      display: isActive ? 'block' : 'none',
+      visibility: isActive ? 'visible' : 'hidden',
+      pointerEvents: isActive ? 'auto' : 'none',
       height: '100%',
       width: '100%',
       position: 'absolute',
@@ -159,7 +160,7 @@ function AppContent() {
         return (
           <div key="home" style={{
             ...commonStyle,
-            display: (currentView === 'home' || !currentView) ? 'flex' : 'none',
+            display: 'flex',
             backgroundColor: colors['bg-primary'],
             color: colors['text-primary'],
             flexDirection: 'column',
