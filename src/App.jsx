@@ -47,7 +47,7 @@ function AppContent() {
   const renderView = (viewId) => {
     const isActive = currentView === viewId;
     const commonStyle = {
-      visibility: isActive ? 'visible' : 'hidden',
+      opacity: isActive ? 1 : 0,
       pointerEvents: isActive ? 'auto' : 'none',
       height: '100%',
       width: '100%',
@@ -56,6 +56,8 @@ function AppContent() {
       left: 0,
       right: 0,
       bottom: 0,
+      zIndex: isActive ? 10 : 1,
+      transition: 'opacity 0.15s ease-in-out',
     };
 
     switch (viewId) {
