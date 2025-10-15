@@ -11,6 +11,7 @@
 
 const dbus = require('dbus-next');
 const { systemBus, Variant } = dbus;
+const { Interface } = dbus.interface;
 
 // BlueZ D-Bus constants
 const BLUEZ_SERVICE = 'org.bluez';
@@ -205,73 +206,36 @@ class LinuxBluetoothDevice {
     try {
       console.log('[Linux Bluetooth] Setting up pairing agent...');
       
-      // Create agent interface implementation
-      const agentInterface = {
-        name: AGENT_INTERFACE,
-        methods: {
-          Release: {
-            inSignature: '',
-            outSignature: ''
-          },
-          RequestPinCode: {
-            inSignature: 'o',
-            outSignature: 's'
-          },
-          DisplayPinCode: {
-            inSignature: 'os',
-            outSignature: ''
-          },
-          RequestPasskey: {
-            inSignature: 'o',
-            outSignature: 'u'
-          },
-          DisplayPasskey: {
-            inSignature: 'ouu',
-            outSignature: ''
-          },
-          RequestConfirmation: {
-            inSignature: 'ou',
-            outSignature: ''
-          },
-          RequestAuthorization: {
-            inSignature: 'o',
-            outSignature: ''
-          },
-          AuthorizeService: {
-            inSignature: 'os',
-            outSignature: ''
-          },
-          Cancel: {
-            inSignature: '',
-            outSignature: ''
-          }
+      // Create agent class that extends Interface
+      class AgentInterface extends Interface {
+        constructor() {
+          super(AGENT_INTERFACE);
         }
-      };
 
-      // Create agent object with method implementations
-      const agent = {
         Release() {
           console.log('[Pairing Agent] Released');
-        },
+        }
+
         RequestPinCode(devicePath) {
           const address = devicePath.split('/').pop().replace(/_/g, ':');
           console.log(`[Pairing Agent] PIN requested for ${address} - Using default PIN: 0000`);
-          // Return default PIN for legacy devices
           return '0000';
-        },
+        }
+
         DisplayPinCode(devicePath, pincode) {
           const address = devicePath.split('/').pop().replace(/_/g, ':');
           console.log(`\n═══════════════════════════════════════`);
           console.log(`[Pairing Agent] PIN CODE for ${address}`);
           console.log(`PIN: ${pincode}`);
           console.log(`═══════════════════════════════════════\n`);
-        },
+        }
+
         RequestPasskey(devicePath) {
           const address = devicePath.split('/').pop().replace(/_/g, ':');
           console.log(`[Pairing Agent] Passkey requested for ${address} - Using default: 0`);
-          // Return default passkey for legacy devices
           return 0;
-        },
+        }
+
         DisplayPasskey(devicePath, passkey, entered) {
           const address = devicePath.split('/').pop().replace(/_/g, ':');
           const passStr = String(passkey).padStart(6, '0');
@@ -280,7 +244,8 @@ class LinuxBluetoothDevice {
           console.log(`Passkey: ${passStr}`);
           console.log(`Entered: ${entered}/6 digits`);
           console.log(`═══════════════════════════════════════\n`);
-        },
+        }
+
         RequestConfirmation(devicePath, passkey) {
           const address = devicePath.split('/').pop().replace(/_/g, ':');
           const passStr = String(passkey).padStart(6, '0');
@@ -290,30 +255,28 @@ class LinuxBluetoothDevice {
           console.log(`Passkey: ${passStr}`);
           console.log(`Auto-accepting pairing...`);
           console.log(`═══════════════════════════════════════\n`);
-          // Auto-accept confirmation
-          return;
-        },
+        }
+
         RequestAuthorization(devicePath) {
           const address = devicePath.split('/').pop().replace(/_/g, ':');
           console.log(`[Pairing Agent] Authorization requested for ${address} - Auto-authorizing`);
-          // Auto-authorize
-          return;
-        },
+        }
+
         AuthorizeService(devicePath, uuid) {
           const address = devicePath.split('/').pop().replace(/_/g, ':');
           console.log(`[Pairing Agent] Service authorization for ${address}: ${uuid} - Auto-authorizing`);
-          // Auto-authorize service
-          return;
-        },
+        }
+
         Cancel() {
           console.log('[Pairing Agent] Pairing cancelled by remote device');
         }
-      };
+      }
+
+      // Create the agent interface instance
+      const agentInterface = new AgentInterface();
 
       // Export agent on D-Bus
-      this.bus.export(this.agentPath, {
-        [AGENT_INTERFACE]: agent
-      });
+      this.bus.export(this.agentPath, agentInterface);
 
       // Get agent manager
       const agentManagerObj = await this.bus.getProxyObject(BLUEZ_SERVICE, '/org/bluez');

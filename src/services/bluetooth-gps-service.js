@@ -158,8 +158,29 @@ class BluetoothGPSService extends EventEmitter {
    */
   _connect() {
     return new Promise((resolve, reject) => {
-      // Python script for Bluetooth RFCOMM connection
-      const pythonScript = `
+      // Check if improved connector exists, otherwise use embedded script
+      const fs = require('fs');
+      const path = require('path');
+      const improvedConnectorPath = path.join(__dirname, '../../gps-connector-improved.py');
+      
+      let useImprovedConnector = false;
+      try {
+        if (fs.existsSync(improvedConnectorPath)) {
+          useImprovedConnector = true;
+          console.log('[GPS] Using improved GPS connector');
+        }
+      } catch (e) {
+        // Fall back to embedded script
+      }
+      
+      if (useImprovedConnector) {
+        // Use the improved external script
+        this.pythonProcess = spawn('python3', [improvedConnectorPath, this.deviceAddress], {
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+      } else {
+        // Python script for Bluetooth RFCOMM connection (fallback)
+        const pythonScript = `
 import sys
 import json
 import bluetooth
@@ -255,8 +276,9 @@ if __name__ == "__main__":
     connect_gps(address)
 `;
 
-      // Spawn Python process
-      this.pythonProcess = spawn('python3', ['-u', '-c', pythonScript, this.deviceAddress]);
+        // Spawn Python process with embedded script
+        this.pythonProcess = spawn('python3', ['-u', '-c', pythonScript, this.deviceAddress]);
+      }
       
       let connectionResolved = false;
 
