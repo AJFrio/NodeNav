@@ -73,8 +73,8 @@ const MediaPlayer = () => {
 
     checkConnection();
 
-    // Poll for media state updates every 2 seconds
-    statePollingInterval.current = setInterval(updateMediaState, 2000);
+    // Poll for media state updates every 1 second for responsive UI
+    statePollingInterval.current = setInterval(updateMediaState, 1000);
 
     return () => {
       if (progressInterval.current) {

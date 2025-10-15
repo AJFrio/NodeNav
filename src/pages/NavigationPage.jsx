@@ -154,6 +154,26 @@ const NavigationPage = () => {
     return () => clearInterval(interval);
   }, [musicState]);
 
+  // Helper to force refresh music state from localStorage
+  const forceRefreshMusicState = () => {
+    try {
+      const saved = localStorage.getItem('nodenav-music-state');
+      if (saved) {
+        const state = JSON.parse(saved);
+        if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
+          setMusicState({
+            isPlaying: state.isPlaying,
+            currentTrack: state.currentTrack,
+          });
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('[Navigation] Failed to refresh music state:', error);
+    }
+    return false;
+  };
+
   // Music control handlers - matching MediaPlayer implementation
   const handlePlayPause = async () => {
     try {
@@ -165,20 +185,16 @@ const NavigationPage = () => {
         await bluetoothAPI.playMedia();
         console.log('[Navigation] Playing music');
       }
-      // Force refresh music state after a delay to ensure sync
-      setTimeout(() => {
-        const saved = localStorage.getItem('nodenav-music-state');
-        if (saved) {
-          const state = JSON.parse(saved);
-          if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
-            setMusicState({
-              isPlaying: state.isPlaying, // Read actual state from localStorage
-              currentTrack: state.currentTrack,
-            });
-            console.log('[Navigation] Force updated play/pause state to:', state.isPlaying);
+      
+      // Poll multiple times to catch the update (MediaPlayer polls every 2 seconds)
+      const pollAttempts = [500, 1500, 2500];
+      pollAttempts.forEach(delay => {
+        setTimeout(() => {
+          if (forceRefreshMusicState()) {
+            console.log(`[Navigation] Refreshed play/pause state after ${delay}ms`);
           }
-        }
-      }, 800); // Wait 800ms for backend to update
+        }, delay);
+      });
     } catch (error) {
       console.error('[Navigation] Play/Pause failed:', error);
     }
@@ -188,20 +204,16 @@ const NavigationPage = () => {
     try {
       await bluetoothAPI.previousTrack();
       console.log('[Navigation] Went to previous track');
-      // Force refresh music state after a delay to allow backend to update
-      setTimeout(() => {
-        const saved = localStorage.getItem('nodenav-music-state');
-        if (saved) {
-          const state = JSON.parse(saved);
-          if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
-            setMusicState({
-              isPlaying: state.isPlaying,
-              currentTrack: state.currentTrack,
-            });
-            console.log('[Navigation] Force updated after previous track');
+      
+      // Poll multiple times to catch the update (MediaPlayer polls every 2 seconds)
+      const pollAttempts = [500, 1500, 2500];
+      pollAttempts.forEach(delay => {
+        setTimeout(() => {
+          if (forceRefreshMusicState()) {
+            console.log(`[Navigation] Refreshed after previous track (${delay}ms)`);
           }
-        }
-      }, 1000); // Wait 1 second for backend to update
+        }, delay);
+      });
     } catch (error) {
       console.error('[Navigation] Previous track failed:', error);
     }
@@ -211,20 +223,16 @@ const NavigationPage = () => {
     try {
       await bluetoothAPI.nextTrack();
       console.log('[Navigation] Skipped to next track');
-      // Force refresh music state after a delay to allow backend to update
-      setTimeout(() => {
-        const saved = localStorage.getItem('nodenav-music-state');
-        if (saved) {
-          const state = JSON.parse(saved);
-          if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
-            setMusicState({
-              isPlaying: state.isPlaying,
-              currentTrack: state.currentTrack,
-            });
-            console.log('[Navigation] Force updated after next track');
+      
+      // Poll multiple times to catch the update (MediaPlayer polls every 2 seconds)
+      const pollAttempts = [500, 1500, 2500];
+      pollAttempts.forEach(delay => {
+        setTimeout(() => {
+          if (forceRefreshMusicState()) {
+            console.log(`[Navigation] Refreshed after next track (${delay}ms)`);
           }
-        }
-      }, 1000); // Wait 1 second for backend to update
+        }, delay);
+      });
     } catch (error) {
       console.error('[Navigation] Next track failed:', error);
     }
