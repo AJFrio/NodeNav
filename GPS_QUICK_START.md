@@ -9,17 +9,19 @@ Get GPS location streaming from your Android device to NodeNav in just a few ste
 - ✅ Devices paired via Bluetooth
 - ✅ MapBox access token configured (see [MAPBOX_SETUP.md](./MAPBOX_SETUP.md))
 
-## Windows Setup
+## ⚠️ Windows Note
 
-### Step 1: Install Bluetooth Package (Optional)
+GPS streaming is **Linux-only**. If you're developing on Windows, you have two options:
 
-For real GPS streaming from Android:
+1. **Test on a Linux system** (Raspberry Pi, Linux PC, or server)
+2. **Use WSL2** (Windows Subsystem for Linux):
+   ```powershell
+   # Install WSL2
+   wsl --install
+   # Then follow Linux setup steps inside WSL2
+   ```
 
-```bash
-npm install @abandonware/bluetooth-serial-port
-```
-
-**Note:** This requires Visual Studio Build Tools. If you encounter errors, see the troubleshooting section below.
+The NodeNav server will start on Windows but GPS features will only work when deployed to Linux.
 
 ### Step 2: Pair Your Android Device
 
@@ -53,10 +55,29 @@ The server will automatically initialize the GPS service.
 
 ## Linux Setup
 
-### Step 1: Install Python Bluetooth
+### Step 1: Run Automated Setup (Recommended)
 
 ```bash
-sudo apt-get install python3-bluez
+# Make the script executable and run it
+chmod +x setup-gps.sh
+./setup-gps.sh
+```
+
+The script will automatically:
+- ✅ Install Python 3
+- ✅ Install python3-bluez (Bluetooth library)
+- ✅ Install BlueZ (Bluetooth stack)
+- ✅ Add your user to the bluetooth group
+- ✅ Start and enable the Bluetooth service
+- ✅ Test the installation
+
+**OR** Manual Installation:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y python3 python3-bluez bluez
+sudo usermod -a -G bluetooth $USER
+# Log out and back in for permissions to take effect
 ```
 
 ### Step 2: Pair Your Android Device
@@ -120,27 +141,25 @@ The simulation is perfect for:
 
 ## Troubleshooting
 
-### "Cannot find module '@abandonware/bluetooth-serial-port'"
+### "Python bluetooth module not installed"
 
-**Solution:** Either install the package or use simulation mode:
+**Solution:** Run the setup script on your Linux system:
 
 ```bash
-# Option 1: Install the package
-npm install @abandonware/bluetooth-serial-port
-
-# Option 2: Just use simulation mode
-# (No action needed - simulation is automatic)
+chmod +x setup-gps.sh
+./setup-gps.sh
 ```
 
-### Bluetooth Package Won't Install on Windows
-
-**Solution:** Install build tools:
-
+**Or** install manually:
 ```bash
-# Install Visual Studio Build Tools
-npm install --global windows-build-tools
+sudo apt-get install python3-bluez
+```
 
-# Or install Visual Studio 2019+ with "Desktop development with C++" workload
+### "Python3 not found"
+
+**Solution:** Install Python 3:
+```bash
+sudo apt-get install python3
 ```
 
 ### GPS Not Connecting

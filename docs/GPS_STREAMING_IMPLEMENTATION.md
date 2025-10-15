@@ -1,17 +1,21 @@
 # GPS Bluetooth Streaming - Implementation Guide
 
 ## Overview
-NodeNav now supports real-time GPS location streaming from an Android device over Bluetooth. The GPS data is displayed on the navigation page with a live position marker that follows your movement.
+NodeNav supports real-time GPS location streaming from an Android device over Bluetooth on Linux systems. The GPS data is displayed on the navigation page with a live position marker that follows your movement.
+
+**Platform Support:** Linux only (optimized for Raspberry Pi and other Linux-based headunits)
 
 ## Architecture
 
 ### Components
 
 1. **bluetooth-gps-service.js** - Backend service that handles GPS data streaming
-   - Platform-specific implementations for Windows, Linux, and simulation mode
+   - **Linux-optimized** implementation using Python/BlueZ
    - Listens for GPS data over Bluetooth RFCOMM (Serial Port Profile)
    - Parses newline-delimited JSON location data
-   - Maintains current location state
+   - Event-driven architecture with EventEmitter
+   - Automatic reconnection with exponential backoff
+   - Statistics tracking and performance monitoring
 
 2. **Server API Endpoints** - REST API for GPS data access
    - `GET /api/gps/location` - Get current GPS location
@@ -70,47 +74,67 @@ The Android app streams GPS data as newline-delimited JSON messages:
 - **Bearing rotation** - Map rotates to match your direction of travel (if bearing is available)
 - **Smooth transitions** - Map smoothly animates to new positions
 
-## Platform-Specific Implementation
+## Linux Implementation Details
 
-### Windows
+NodeNav GPS streaming is optimized exclusively for Linux systems using BlueZ (the official Linux Bluetooth stack).
 
-Uses `@abandonware/bluetooth-serial-port` package for Bluetooth RFCOMM communication.
+### Prerequisites
 
-**Prerequisites:**
+**Required:**
 ```bash
-npm install @abandonware/bluetooth-serial-port
+# Install Python 3 and Bluetooth library
+sudo apt-get update
+sudo apt-get install python3 python3-bluez
+
+# Verify installation
+python3 --version
 ```
 
-**How it works:**
-1. Searches for the GPS service on the connected device
-2. Connects to the RFCOMM channel
-3. Streams data in real-time
-4. Handles disconnection gracefully
-
-### Linux
-
-Uses a Python bridge with `pybluez` for Bluetooth communication.
-
-**Prerequisites:**
+**Bluetooth Permissions:**
 ```bash
-sudo apt-get install python3-bluez
+# Option 1: Add user to bluetooth group (recommended)
+sudo usermod -a -G bluetooth $USER
+# Log out and back in for changes to take effect
+
+# Option 2: Create D-Bus policy (see LINUX_BLUETOOTH_GUIDE.md)
 ```
 
-**How it works:**
-1. Spawns a Python subprocess to handle Bluetooth connection
-2. Python script connects to device via RFCOMM
-3. Data is piped back to Node.js via stdout
-4. JSON parsing happens in Node.js
+### How It Works
 
-### Simulation Mode
+1. **Connection Initialization**
+   - Node.js spawns a Python subprocess with a Bluetooth RFCOMM script
+   - Python connects to the Android device on channel 1 (standard SPP)
+   - Connection status messages sent via stderr
 
-For development and testing without a physical device.
+2. **Data Streaming**
+   - GPS data flows from Python to Node.js via stdout
+   - Each JSON message is validated before processing
+   - Structured error messages for debugging
 
-**How it works:**
-1. Simulates GPS movement in a circular pattern around Boulder, CO
-2. Updates location every 2 seconds
-3. Generates realistic accuracy and bearing values
-4. Perfect for testing the UI without hardware
+3. **Automatic Reconnection**
+   - Detects connection loss automatically
+   - Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s (max)
+   - Up to 5 reconnection attempts by default
+   - Manual reconnection always available
+
+4. **Event-Driven Architecture**
+   - Uses Node.js EventEmitter for location updates
+   - Events: `connected`, `disconnected`, `location`, `reconnect_failed`
+   - Clean separation between transport and application logic
+
+5. **Performance Optimizations**
+   - Efficient buffering for incomplete JSON messages
+   - Throttled logging (every 5 updates to reduce noise)
+   - Socket timeout handling for better responsiveness
+   - Graceful shutdown with SIGTERM/SIGINT handling
+
+### Why Linux-Only?
+
+- **Native BlueZ Support**: Linux has the best Bluetooth stack for embedded systems
+- **Raspberry Pi Optimized**: Perfect for car headunit projects
+- **Reliable RFCOMM**: BlueZ provides stable serial port profile implementation
+- **Resource Efficient**: Python bridge is lightweight and fast
+- **Standard Platform**: Most automotive projects use Linux-based systems
 
 ## Usage
 
@@ -139,6 +163,48 @@ const status = await gpsAPI.getStatus();
 console.log('Connected:', status.connected);
 console.log('Has Location:', status.hasLocation);
 console.log('Last Update:', new Date(status.lastUpdate));
+console.log('Uptime:', status.uptime / 1000, 'seconds');
+console.log('Auto-Reconnect:', status.autoReconnect);
+```
+
+### Event Listeners
+
+The GPS service is an EventEmitter. You can listen for events:
+
+```javascript
+const gpsService = require('./services/bluetooth-gps-service');
+
+// Listen for new location updates
+gpsService.on('location', (location) => {
+  console.log(`New location: ${location.latitude}, ${location.longitude}`);
+});
+
+// Listen for connection events
+gpsService.on('connected', (info) => {
+  console.log(`Connected to ${info.deviceAddress}`);
+});
+
+gpsService.on('disconnected', (info) => {
+  console.log(`Disconnected from ${info.deviceAddress}`);
+  console.log('Stats:', info.stats);
+});
+
+gpsService.on('reconnect_failed', (info) => {
+  console.error(`Failed to reconnect after ${info.attempts} attempts`);
+});
+```
+
+### Statistics
+
+View detailed statistics about GPS performance:
+
+```javascript
+const stats = gpsService.getStats();
+console.log('Total Updates:', stats.totalUpdates);
+console.log('Updates/sec:', stats.updatesPerSecond);
+console.log('Uptime:', stats.uptime / 1000, 'seconds');
+console.log('Errors:', stats.errors);
+console.log('Parse Errors:', stats.parseErrors);
 ```
 
 ## Troubleshooting
@@ -147,11 +213,35 @@ console.log('Last Update:', new Date(status.lastUpdate));
 
 **Symptoms:** No GPS indicator appears, location not updating
 
-**Solutions:**
-1. Ensure Android device is paired and connected via Bluetooth
-2. Check that the Android GPS streaming app is running
-3. Verify GPS permissions are granted on Android device
-4. Check browser console for error messages
+**Check server logs for specific errors:**
+
+**"Python3 not found"**
+```bash
+sudo apt-get install python3
+```
+
+**"Failed to start Python process"**
+```bash
+sudo apt-get install python3-bluez
+```
+
+**"Connection failed: [Errno 13] Permission denied"**
+```bash
+# Add user to bluetooth group
+sudo usermod -a -G bluetooth $USER
+# Log out and back in
+```
+
+**"Connection timeout after 30 seconds"**
+1. Ensure Android device is paired: `bluetoothctl paired-devices`
+2. Connect device: `bluetoothctl connect XX:XX:XX:XX:XX:XX`
+3. Check Android GPS app is running and showing "Streaming..."
+4. Verify GPS permissions are granted on Android
+
+**"Connection failed: Host is down"**
+1. Device is out of range or Bluetooth is off
+2. Reconnect device in Bluetooth settings
+3. Restart Android GPS streaming app
 
 ### Inaccurate Position
 
@@ -172,15 +262,35 @@ console.log('Last Update:', new Date(status.lastUpdate));
 3. Keep Android app in foreground to prevent system from killing it
 4. Check battery optimization settings on Android
 
-### Windows Installation Issues
+### Auto-Reconnection Not Working
 
-**Symptoms:** Error installing `bluetooth-serial-port` package
+**Symptoms:** GPS doesn't reconnect after disconnect
 
 **Solutions:**
-1. Install Visual Studio Build Tools 2019 or newer
-2. Install Python 2.7 (required for node-gyp)
-3. Run: `npm install --global windows-build-tools`
-4. Restart terminal and try again
+1. Check if auto-reconnect is enabled:
+   ```javascript
+   const info = gpsService.getConnectionInfo();
+   console.log('Auto-reconnect:', info.autoReconnect);
+   ```
+2. If disabled, restart with auto-reconnect:
+   ```javascript
+   await gpsAPI.startListening('XX:XX:XX:XX:XX:XX', true);
+   ```
+3. Check reconnection attempts haven't been exhausted:
+   ```javascript
+   console.log('Attempts:', info.reconnectAttempts);
+   // If >= 5, call startListening() again to reset
+   ```
+
+### High Parse Errors
+
+**Symptoms:** Many "Parse error" messages in logs
+
+**Solutions:**
+1. Check Android app version (may be sending malformed data)
+2. Verify Android app is using correct JSON format
+3. Check for Bluetooth interference causing data corruption
+4. Move devices closer together
 
 ## API Reference
 

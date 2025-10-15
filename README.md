@@ -274,14 +274,16 @@ NodeNav/
 │   ├── services/                  # Backend services
 │   │   ├── api.js                 # Frontend API client
 │   │   ├── bluetooth-service.js   # Bluetooth device management (platform router)
-│   │   ├── bluetooth-device-linux.js   # Linux Bluetooth (BlueZ/D-Bus) - NEW!
+│   │   ├── bluetooth-device-linux.js   # Linux Bluetooth (BlueZ/D-Bus)
 │   │   ├── bluetooth-device-windows.js # Windows Bluetooth (PowerShell)
 │   │   ├── bluetooth-audio-service.js  # Audio streaming (platform router)
 │   │   ├── bluetooth-audio-windows.js  # Windows audio implementation
+│   │   ├── bluetooth-gps-service.js    # GPS streaming over Bluetooth - NEW!
 │   │   ├── gpio-service.js        # GPIO control
 │   │   └── server.js              # Express backend server
 │   │
 ├── docs/                          # Documentation
+│   ├── GPS_STREAMING_IMPLEMENTATION.md     # GPS streaming technical guide
 │   ├── BLUETOOTH_AUDIO_SETUP.md
 │   ├── BLUETOOTH_AUDIO_IMPLEMENTATION.md
 │   ├── WINDOWS_BLUETOOTH_SETUP.md
@@ -451,12 +453,15 @@ This project is licensed under the ISC License. See the LICENSE file for details
 ## Documentation
 
 - [Main README](README.md) - This file
-- [Linux Bluetooth Guide](LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Device management on Linux
-- [Linux Bluetooth Implementation](LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!** Technical details
+- [GPS Quick Start](GPS_QUICK_START.md) - **NEW!** Get GPS streaming working in minutes
+- [GPS Implementation Guide](docs/GPS_STREAMING_IMPLEMENTATION.md) - **NEW!** Technical details
+- [Linux Bluetooth Guide](LINUX_BLUETOOTH_GUIDE.md) - Device management on Linux
+- [Linux Bluetooth Implementation](LINUX_BLUETOOTH_IMPLEMENTATION.md) - Technical details
 - [Bluetooth Audio Setup (Linux)](BLUETOOTH_AUDIO_SETUP.md)
 - [Windows Bluetooth Setup](WINDOWS_BLUETOOTH_SETUP.md)
 - [Windows Testing Guide](WINDOWS_TESTING_GUIDE.md)
 - [Bluetooth Audio Implementation Details](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
+- [MapBox Setup](MAPBOX_SETUP.md) - Configure MapBox for navigation
 
 ## Useful Links
 
