@@ -265,7 +265,7 @@ const NavigationPage = () => {
     <div
       style={{
         width: '100%',
-        height: '100vh',
+        height: '100%',
         backgroundColor: colors['bg-primary'],
         position: 'relative',
         overflow: 'hidden',

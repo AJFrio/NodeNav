@@ -44,109 +44,119 @@ function AppContent() {
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  const renderView = () => {
-    switch (currentView) {
+  const renderView = (viewId) => {
+    const isActive = currentView === viewId;
+    const commonStyle = {
+      display: isActive ? 'block' : 'none',
+      height: '100%',
+      width: '100%',
+    };
+
+    switch (viewId) {
       case 'gpio':
-        return <GPIOControl />;
+        return <div key="gpio" style={commonStyle}><GPIOControl /></div>;
       case 'navigation':
-        return <NavigationPage />;
+        // Always keep navigation mounted for preloading
+        return <div key="navigation" style={commonStyle}><NavigationPage /></div>;
       case 'media':
-        return <MediaPlayer />;
+        return <div key="media" style={commonStyle}><MediaPlayer /></div>;
       case 'settings':
         return (
-          <div style={{
-            padding: '1.5rem',
-            maxWidth: '64rem', // 1024px
-            margin: '0 auto',
-          }}>
-            <h1 style={{
-              ...styles.typography.h1,
-              color: colors['text-primary'],
-              marginBottom: '2rem',
-            }}>Settings</h1>
-
+          <div key="settings" style={commonStyle}>
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '1.5rem',
-            }}>
-              <SettingsButton
-                icon={Smartphone}
-                title="Bluetooth"
-                description="Pair and manage Bluetooth devices"
-                onClick={() => setCurrentView('bluetooth')}
-              />
-
-              <SettingsButton
-                icon={Monitor}
-                title="Display"
-                description="Theme and display preferences"
-                onClick={() => setCurrentView('display')}
-                variant="secondary"
-              />
-
-              <SettingsButton
-                icon={BarChart3}
-                title="Data"
-                description="View command history"
-                onClick={() => setCurrentView('data')}
-                variant="tertiary"
-              />
-            </div>
-
-            <div style={{
-              marginTop: '2rem',
-              backgroundColor: colors['bg-secondary'],
-              border: `1px solid ${colors['bg-tertiary']}`,
-              borderRadius: '0.5rem',
               padding: '1.5rem',
-              transition: 'background-color 150ms ease-in-out',
+              maxWidth: '64rem', // 1024px
+              margin: '0 auto',
             }}>
-              <h2 style={{
-                ...styles.typography.h2,
+              <h1 style={{
+                ...styles.typography.h1,
                 color: colors['text-primary'],
-                marginBottom: '1rem',
-              }}>System Information</h2>
+                marginBottom: '2rem',
+              }}>Settings</h1>
+
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1rem',
-                fontSize: '0.875rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '1.5rem',
               }}>
-                <div>
-                  <span style={{ color: colors['text-secondary'] }}>GPIO Backend:</span>
-                  <span style={{ color: colors['text-primary'], marginLeft: '0.5rem' }}>Active (Logging Mode)</span>
-                </div>
-                <div>
-                  <span style={{ color: colors['text-secondary'] }}>Bluetooth Backend:</span>
-                  <span style={{ color: colors['text-primary'], marginLeft: '0.5rem' }}>Active (Simulation Mode)</span>
-                </div>
-                <div>
-                  <span style={{ color: colors['text-secondary'] }}>Version:</span>
-                  <span style={{ color: colors['text-tertiary'], marginLeft: '0.5rem' }}>1.0.0</span>
-                </div>
-                <div>
-                  <span style={{ color: colors['text-secondary'] }}>Last Updated:</span>
-                  <span style={{ color: colors['text-tertiary'], marginLeft: '0.5rem' }}>{new Date().toLocaleDateString()}</span>
+                <SettingsButton
+                  icon={Smartphone}
+                  title="Bluetooth"
+                  description="Pair and manage Bluetooth devices"
+                  onClick={() => setCurrentView('bluetooth')}
+                />
+
+                <SettingsButton
+                  icon={Monitor}
+                  title="Display"
+                  description="Theme and display preferences"
+                  onClick={() => setCurrentView('display')}
+                  variant="secondary"
+                />
+
+                <SettingsButton
+                  icon={BarChart3}
+                  title="Data"
+                  description="View command history"
+                  onClick={() => setCurrentView('data')}
+                  variant="tertiary"
+                />
+              </div>
+
+              <div style={{
+                marginTop: '2rem',
+                backgroundColor: colors['bg-secondary'],
+                border: `1px solid ${colors['bg-tertiary']}`,
+                borderRadius: '0.5rem',
+                padding: '1.5rem',
+                transition: 'background-color 150ms ease-in-out',
+              }}>
+                <h2 style={{
+                  ...styles.typography.h2,
+                  color: colors['text-primary'],
+                  marginBottom: '1rem',
+                }}>System Information</h2>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '1rem',
+                  fontSize: '0.875rem',
+                }}>
+                  <div>
+                    <span style={{ color: colors['text-secondary'] }}>GPIO Backend:</span>
+                    <span style={{ color: colors['text-primary'], marginLeft: '0.5rem' }}>Active (Logging Mode)</span>
+                  </div>
+                  <div>
+                    <span style={{ color: colors['text-secondary'] }}>Bluetooth Backend:</span>
+                    <span style={{ color: colors['text-primary'], marginLeft: '0.5rem' }}>Active (Simulation Mode)</span>
+                  </div>
+                  <div>
+                    <span style={{ color: colors['text-secondary'] }}>Version:</span>
+                    <span style={{ color: colors['text-tertiary'], marginLeft: '0.5rem' }}>1.0.0</span>
+                  </div>
+                  <div>
+                    <span style={{ color: colors['text-secondary'] }}>Last Updated:</span>
+                    <span style={{ color: colors['text-tertiary'], marginLeft: '0.5rem' }}>{new Date().toLocaleDateString()}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         );
       case 'bluetooth':
-        return <BluetoothSettings />;
+        return <div key="bluetooth" style={commonStyle}><BluetoothSettings /></div>;
       case 'display':
-        return <DisplaySettings />;
+        return <div key="display" style={commonStyle}><DisplaySettings /></div>;
       case 'data':
-        return <DataPage />;
+        return <div key="data" style={commonStyle}><DataPage /></div>;
       case 'home':
       default:
         return (
-          <div style={{
-            height: '100vh',
+          <div key="home" style={{
+            ...commonStyle,
+            display: (currentView === 'home' || !currentView) ? 'flex' : 'none',
             backgroundColor: colors['bg-primary'],
             color: colors['text-primary'],
-            display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
@@ -227,10 +237,18 @@ function AppContent() {
       <main style={{
         height: '100%',
         paddingBottom: '5rem', // Account for bottom navbar
-        overflowY: 'auto',
+        overflowY: currentView === 'navigation' ? 'hidden' : 'auto',
         overflowX: 'hidden',
       }}>
-        {renderView()}
+        {/* Render all views but only show the active one */}
+        {renderView('home')}
+        {renderView('gpio')}
+        {renderView('navigation')}
+        {renderView('media')}
+        {renderView('settings')}
+        {renderView('bluetooth')}
+        {renderView('display')}
+        {renderView('data')}
       </main>
 
       {/* Bottom Navigation Bar */}
