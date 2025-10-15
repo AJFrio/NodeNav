@@ -62,9 +62,33 @@ The MapBox component supports the following props:
 - **`center`**: [longitude, latitude] - Map center coordinates
 - **`zoom`**: Number (0-22) - Zoom level
 - **`bearing`**: Number (0-360) - Map rotation in degrees
-- **`pitch`**: Number (0-60) - Map tilt angle in degrees
-- **`style`**: String - MapBox style URL
+- **`pitch`**: Number (0-85) - Map tilt angle in degrees (v3 supports up to 85°)
+- **`style`**: String - MapBox style URL (defaults to streets-v12)
 - **`onMapLoad`**: Function - Callback when map finishes loading
+
+## Map Modes
+
+The Navigation component supports both 2D and 3D map modes:
+
+### 2D Maps (Default)
+- **Theme-aware colors**: Automatically switches between dark and light styles
+- **Dark Mode**: Uses `mapbox://styles/mapbox/dark-v11`
+- **Light Mode**: Uses `mapbox://styles/mapbox/streets-v12`
+- Flat, traditional map view optimized for navigation
+
+### 3D Maps (Optional)
+Enable 3D maps in **Settings → Display → Map Settings** to access:
+
+- **3D Landmark Buildings**: Real 3D models of famous landmarks and buildings
+- **Dynamic Lighting**: Automatic shadows and lighting based on time of day
+- **3D Trees & Terrain**: Enhanced visual realism
+- **Theme-Aware Light Presets**: 
+  - **Dark Mode**: Uses "night" preset with dark atmospheric lighting
+  - **Light Mode**: Uses "day" preset with bright daylight
+- Uses **Mapbox Standard Style** (`mapbox://styles/mapbox/standard`)
+- **Real-time Updates**: Theme changes are applied instantly without reloading
+
+The map style automatically adapts to your theme preference in both modes. When you toggle between light and dark mode, 3D maps will update their lighting in real-time to match.
 
 ## Free Tier Limits
 
@@ -73,12 +97,6 @@ MapBox offers a generous free tier:
 - 100,000 requests for static images
 - 50,000 directions requests
 - More than enough for personal projects!
-
-## Dark Mode Support
-
-The Navigation component automatically switches between MapBox's dark and light styles based on your theme preference:
-- **Dark Mode**: Uses `mapbox://styles/mapbox/dark-v11`
-- **Light Mode**: Uses `mapbox://styles/mapbox/streets-v12`
 
 ## Documentation
 

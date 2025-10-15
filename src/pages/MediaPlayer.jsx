@@ -18,6 +18,20 @@ const MediaPlayer = () => {
   });
   const [connectedDevice, setConnectedDevice] = useState(null);
 
+  // Save music state to localStorage for other components (like NavigationPage)
+  useEffect(() => {
+    try {
+      const musicState = {
+        isPlaying,
+        currentTrack,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('nodenav-music-state', JSON.stringify(musicState));
+    } catch (error) {
+      console.error('Failed to save music state:', error);
+    }
+  }, [isPlaying, currentTrack]);
+
   // Audio reference
   const audioRef = useRef(null);
   const progressInterval = useRef(null);

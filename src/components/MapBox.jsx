@@ -10,8 +10,8 @@ const MapBox = ({
   center = [-105.2705, 40.0150], // Default to Boulder, CO [lng, lat]
   zoom = 13,
   bearing = 0, // Rotation in degrees
-  pitch = 0, // Tilt angle in degrees (0-60)
-  style = 'mapbox://styles/mapbox/streets-v12',
+  pitch = 0, // Tilt angle in degrees (0-85 in v3)
+  style = 'mapbox://styles/mapbox/streets-v12', // Default to streets style
   onMapLoad = null,
   ...props
 }) => {
@@ -36,17 +36,8 @@ const MapBox = ({
       zoom: zoom,
       bearing: bearing,
       pitch: pitch,
-      attributionControl: false, // We'll add our own
+      attributionControl: false,
     });
-
-    // Add navigation controls (zoom buttons)
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    // Add scale control
-    map.current.addControl(new mapboxgl.ScaleControl({
-      maxWidth: 100,
-      unit: 'imperial'
-    }), 'bottom-left');
 
     // Map loaded event
     map.current.on('load', () => {

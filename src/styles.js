@@ -26,12 +26,12 @@ const darkTheme = {
   info: '#ffffff',
   'info-hover': '#f0f0f0',
 
-  // Pure black background hierarchy
-  'bg-primary': '#000000',      // Pure black background
-  'bg-secondary': '#0a0a0a',    // Almost black
-  'bg-tertiary': '#111111',     // Dark gray
-  'bg-quaternary': '#1a1a1a',   // Medium gray
-  'bg-surface': '#222222',      // Light gray
+  // Dark gray background hierarchy
+  'bg-primary': '#282827',      // Darkest background
+  'bg-secondary': '#2f2f2e',    // Slightly lighter
+  'bg-tertiary': '#3a3a39',     // Medium dark
+  'bg-quaternary': '#454544',   // Medium gray
+  'bg-surface': '#505050',      // Lighter gray
 
   // White text hierarchy
   'text-primary': '#ffffff',     // Pure white

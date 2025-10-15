@@ -1,11 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MapBox from '../components/MapBox';
+import MusicControlWidget from '../components/MusicControlWidget';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
+import { bluetoothAPI } from '../services/api';
 
 const NavigationPage = () => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const colors = getColors(theme);
+  const mapInstanceRef = useRef(null);
+
+  // Music state from localStorage
+  const [musicState, setMusicState] = useState({
+    isPlaying: false,
+    currentTrack: null,
+  });
+
+  // Check if 3D maps are enabled
+  const [enable3DMaps, setEnable3DMaps] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nodenav-3d-maps');
+      return saved === 'true';
+    } catch (error) {
+      return false;
+    }
+  });
 
   // Map state - Navigation view optimized for driving
   const [center, setCenter] = useState([-105.2705, 40.0150]); // Boulder, CO
@@ -16,9 +35,130 @@ const NavigationPage = () => {
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-  const handleMapLoad = (map) => {
+  // Listen for changes to 3D maps setting
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('nodenav-3d-maps');
+      setEnable3DMaps(saved === 'true');
+    };
+
+    // Listen for storage events (fired when localStorage changes in another tab/window)
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check periodically for changes within the same tab
+    const interval = setInterval(handleStorageChange, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Determine map style based on 3D setting and theme
+  const getMapStyle = () => {
+    if (enable3DMaps) {
+      return 'mapbox://styles/mapbox/standard';
+    }
+    return isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
+  };
+
+  const handleMapLoad = (mapInstance) => {
     console.log('Map loaded successfully');
-    // You can add additional map setup here
+    
+    // Store map instance in a ref so we can update it when theme changes
+    mapInstanceRef.current = mapInstance;
+    
+    // Only configure Standard style if 3D is enabled
+    if (enable3DMaps) {
+      mapInstance.on('style.load', () => {
+        // Set light preset based on theme (day, dusk, dawn, or night)
+        try {
+          mapInstance.setConfigProperty('basemap', 'lightPreset', isDark ? 'night' : 'day');
+          
+          // Ensure 3D objects (buildings, landmarks, trees) are enabled
+          mapInstance.setConfigProperty('basemap', 'show3dObjects', true);
+          
+          console.log('3D map configured with light preset:', isDark ? 'night' : 'day');
+        } catch (error) {
+          console.error('Error setting map config:', error);
+        }
+      });
+    }
+  };
+
+  // Update light preset when theme changes (only for 3D maps)
+  useEffect(() => {
+    if (enable3DMaps && mapInstanceRef.current) {
+      try {
+        // Check if the map style is loaded and is the Standard style
+        const style = mapInstanceRef.current.getStyle();
+        if (style && style.name === 'Mapbox Standard') {
+          mapInstanceRef.current.setConfigProperty('basemap', 'lightPreset', isDark ? 'night' : 'day');
+          console.log('Updated light preset to:', isDark ? 'night' : 'day');
+        }
+      } catch (error) {
+        console.error('Error updating light preset:', error);
+      }
+    }
+  }, [isDark, enable3DMaps]);
+
+  // Poll for music state updates from localStorage
+  useEffect(() => {
+    const updateMusicState = () => {
+      try {
+        const saved = localStorage.getItem('nodenav-music-state');
+        if (saved) {
+          const state = JSON.parse(saved);
+          // Only show if there's a real track playing (not "No Track Playing")
+          if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
+            setMusicState({
+              isPlaying: state.isPlaying,
+              currentTrack: state.currentTrack,
+            });
+          } else {
+            setMusicState({
+              isPlaying: false,
+              currentTrack: null,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load music state:', error);
+      }
+    };
+
+    // Initial load
+    updateMusicState();
+
+    // Poll every second for updates
+    const interval = setInterval(updateMusicState, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Music control handlers
+  const handlePlayPause = async () => {
+    try {
+      await bluetoothAPI.mediaControl(musicState.isPlaying ? 'pause' : 'play');
+    } catch (error) {
+      console.error('Failed to toggle play/pause:', error);
+    }
+  };
+
+  const handlePrevious = async () => {
+    try {
+      await bluetoothAPI.mediaControl('previous');
+    } catch (error) {
+      console.error('Failed to go to previous track:', error);
+    }
+  };
+
+  const handleNext = async () => {
+    try {
+      await bluetoothAPI.mediaControl('next');
+    } catch (error) {
+      console.error('Failed to go to next track:', error);
+    }
   };
 
   // Show error if token is missing
@@ -116,55 +256,19 @@ const NavigationPage = () => {
           zoom={zoom}
           bearing={bearing}
           pitch={pitch}
-          style={theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12'}
+          style={getMapStyle()}
           onMapLoad={handleMapLoad}
         />
       </div>
 
-      {/* Navigation Info Overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '1rem',
-          left: '1rem',
-          backgroundColor: colors['bg-secondary'],
-          border: `1px solid ${colors['bg-tertiary']}`,
-          borderRadius: '0.5rem',
-          padding: '1rem',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-          zIndex: 1,
-          maxWidth: '250px',
-        }}
-      >
-        <h3
-          style={{
-            fontSize: '1rem',
-            fontWeight: '600',
-            color: colors['text-primary'],
-            marginBottom: '0.5rem',
-          }}
-        >
-          Navigation View
-        </h3>
-        <p
-          style={{
-            fontSize: '0.875rem',
-            color: colors['text-secondary'],
-            margin: 0,
-          }}
-        >
-          Boulder, Colorado
-        </p>
-        <p
-          style={{
-            fontSize: '0.75rem',
-            color: colors['text-tertiary'],
-            margin: '0.5rem 0 0 0',
-          }}
-        >
-          Drag to pan • Pinch to rotate • Scroll to zoom
-        </p>
-      </div>
+      {/* Music Control Widget - shows when music is playing */}
+      <MusicControlWidget
+        isPlaying={musicState.isPlaying}
+        currentTrack={musicState.currentTrack}
+        onPlayPause={handlePlayPause}
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+      />
     </div>
   );
 };
