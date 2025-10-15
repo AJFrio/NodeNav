@@ -17,7 +17,7 @@ address = sys.argv[1]
 print(f"Testing connection to {address}")
 
 # Test each channel with a fresh socket
-for channel in range(1, 11):  # Test channels 1-10
+for channel in range(1, 31):  # Test channels 1-30 (Android can use high channels)
     print(f"\nTrying channel {channel}...")
     
     sock = None
