@@ -50,19 +50,24 @@ function AppContent() {
       display: isActive ? 'block' : 'none',
       height: '100%',
       width: '100%',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
     };
 
     switch (viewId) {
       case 'gpio':
-        return <div key="gpio" style={commonStyle}><GPIOControl /></div>;
+        return <div key="gpio" style={{...commonStyle, overflowY: 'auto'}}><GPIOControl /></div>;
       case 'navigation':
         // Always keep navigation mounted for preloading
         return <div key="navigation" style={commonStyle}><NavigationPage /></div>;
       case 'media':
-        return <div key="media" style={commonStyle}><MediaPlayer /></div>;
+        return <div key="media" style={{...commonStyle, overflowY: 'auto'}}><MediaPlayer /></div>;
       case 'settings':
         return (
-          <div key="settings" style={commonStyle}>
+          <div key="settings" style={{...commonStyle, overflowY: 'auto'}}>
             <div style={{
               padding: '1.5rem',
               maxWidth: '64rem', // 1024px
@@ -144,11 +149,11 @@ function AppContent() {
           </div>
         );
       case 'bluetooth':
-        return <div key="bluetooth" style={commonStyle}><BluetoothSettings /></div>;
+        return <div key="bluetooth" style={{...commonStyle, overflowY: 'auto'}}><BluetoothSettings /></div>;
       case 'display':
-        return <div key="display" style={commonStyle}><DisplaySettings /></div>;
+        return <div key="display" style={{...commonStyle, overflowY: 'auto'}}><DisplaySettings /></div>;
       case 'data':
-        return <div key="data" style={commonStyle}><DataPage /></div>;
+        return <div key="data" style={{...commonStyle, overflowY: 'auto'}}><DataPage /></div>;
       case 'home':
       default:
         return (
@@ -161,7 +166,6 @@ function AppContent() {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '2rem',
-            overflow: 'hidden',
           }}>
             <div style={{
               textAlign: 'center',
@@ -235,10 +239,10 @@ function AppContent() {
 
       {/* Main Content */}
       <main style={{
-        height: '100%',
-        paddingBottom: '5rem', // Account for bottom navbar
+        height: 'calc(100% - 5rem)', // Account for bottom navbar
         overflowY: currentView === 'navigation' ? 'hidden' : 'auto',
         overflowX: 'hidden',
+        position: 'relative',
       }}>
         {/* Render all views but only show the active one */}
         {renderView('home')}
