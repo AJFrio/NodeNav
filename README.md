@@ -15,6 +15,16 @@ A modern, minimalist car headunit interface built with React and Node.js. Contro
 - **AVRCP Support**: Full integration with your phone's media apps (Spotify, Apple Music, etc.)
 - **Cross-Platform**: Works on Windows (via PowerShell + WinRT APIs) and Linux (via BlueZ)
 
+### GPS Navigation & Tracking
+- **Real-Time GPS Streaming**: Stream GPS location from your Android device over Bluetooth RFCOMM
+- **Live Position Tracking**: See your current position on the map with a pulsing blue marker
+- **Auto-Centering**: Map automatically follows your movement in real-time
+- **Bearing Support**: Map rotates to match your direction of travel
+- **Accuracy Visualization**: See GPS accuracy with a transparent circle around your position
+- **MapBox Integration**: Beautiful 2D and 3D maps with multiple style options
+- **3D Navigation View**: Optional 60° tilt for an immersive 3rd-person driving view
+- **No Internet Required**: GPS data transmitted entirely over Bluetooth (maps require initial load)
+
 ### Bluetooth Device Management
 - **Device Discovery**: Scan for nearby Bluetooth devices with live updates
 - **Pairing & Connection**: Easy device pairing and connection management directly from the app
