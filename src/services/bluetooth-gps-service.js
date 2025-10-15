@@ -162,20 +162,36 @@ class BluetoothGPSService extends EventEmitter {
       const fs = require('fs');
       const path = require('path');
       const improvedConnectorPath = path.join(__dirname, '../../gps-connector-improved.py');
+      const alternativeConnectorPath = path.join(__dirname, '../../alternative-gps-connector.py');
       
-      let useImprovedConnector = false;
+      let connectorType = 'embedded';
+      let connectorPath = null;
+      
       try {
-        if (fs.existsSync(improvedConnectorPath)) {
-          useImprovedConnector = true;
+        // First try the alternative connector (uses rfcomm tool)
+        if (fs.existsSync(alternativeConnectorPath)) {
+          connectorType = 'alternative';
+          connectorPath = alternativeConnectorPath;
+          console.log('[GPS] Using alternative GPS connector (rfcomm-based)');
+        }
+        // Otherwise try improved connector
+        else if (fs.existsSync(improvedConnectorPath)) {
+          connectorType = 'improved';
+          connectorPath = improvedConnectorPath;
           console.log('[GPS] Using improved GPS connector');
         }
       } catch (e) {
         // Fall back to embedded script
       }
       
-      if (useImprovedConnector) {
+      if (connectorType === 'alternative') {
+        // Use the alternative rfcomm-based connector (requires sudo)
+        this.pythonProcess = spawn('sudo', ['python3', connectorPath, this.deviceAddress], {
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+      } else if (connectorType === 'improved') {
         // Use the improved external script
-        this.pythonProcess = spawn('python3', [improvedConnectorPath, this.deviceAddress], {
+        this.pythonProcess = spawn('python3', [connectorPath, this.deviceAddress], {
           stdio: ['pipe', 'pipe', 'pipe']
         });
       } else {

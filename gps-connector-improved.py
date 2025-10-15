@@ -87,7 +87,8 @@ def connect_gps(address):
         if not channel:
             print(f"NO_SERVICE_FOUND:Trying default channels", file=sys.stderr, flush=True)
             # Try common RFCOMM channels if service discovery fails
-            channels_to_try = [1, 2, 3, 4, 5]
+            # Android can assign channels up to 30
+            channels_to_try = list(range(1, 31))
         else:
             channels_to_try = [channel]
         
