@@ -3,7 +3,7 @@ import MapBox from '../components/MapBox';
 import MusicControlWidget from '../components/MusicControlWidget';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
-import { bluetoothAPI } from '../services/api';
+import { bluetoothAPI, gpsAPI } from '../services/api';
 
 const NavigationPage = () => {
   const { theme, isDark } = useTheme();
@@ -17,6 +17,11 @@ const NavigationPage = () => {
     albumArtUrl: null,
   });
 
+  // GPS state
+  const [gpsLocation, setGpsLocation] = useState(null);
+  const [gpsConnected, setGpsConnected] = useState(false);
+  const [hasStartedGPS, setHasStartedGPS] = useState(false);
+
   // Check if 3D maps are enabled
   const [enable3DMaps, setEnable3DMaps] = useState(() => {
     try {
@@ -28,10 +33,11 @@ const NavigationPage = () => {
   });
 
   // Map state - Navigation view optimized for driving
-  const [center, setCenter] = useState([-105.2705, 40.0150]); // Boulder, CO
+  const [center, setCenter] = useState([-105.2705, 40.0150]); // Boulder, CO (default)
   const [zoom, setZoom] = useState(16.5); // Zoomed in for navigation
   const [bearing, setBearing] = useState(0); // Rotation (can be set to compass heading)
   const [pitch, setPitch] = useState(60); // 60 degrees tilt for 3rd person car view
+  const [isFollowingGPS, setIsFollowingGPS] = useState(true); // Auto-center on GPS
 
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -168,6 +174,78 @@ const NavigationPage = () => {
     return () => clearInterval(interval);
   }, []); // Empty dependency array - no infinite loop!
 
+  // Start GPS listener when a connected device is found
+  useEffect(() => {
+    const startGPSListener = async () => {
+      if (hasStartedGPS) return;
+
+      try {
+        // Check if there's a connected Bluetooth device
+        const connectedDevices = await bluetoothAPI.getConnectedDevices();
+        
+        if (connectedDevices && connectedDevices.length > 0) {
+          // Use the first connected device
+          const device = connectedDevices[0];
+          const deviceAddress = device.address;
+          
+          console.log(`[Navigation] Starting GPS listener for device: ${deviceAddress}`);
+          
+          try {
+            await gpsAPI.startListening(deviceAddress);
+            setHasStartedGPS(true);
+            console.log('[Navigation] GPS listener started successfully');
+          } catch (error) {
+            console.debug('[Navigation] GPS service not available or device not streaming GPS:', error.message);
+          }
+        }
+      } catch (error) {
+        console.debug('[Navigation] Could not start GPS listener:', error.message);
+      }
+    };
+
+    // Try to start GPS listener after a short delay
+    const timeout = setTimeout(startGPSListener, 2000);
+    return () => clearTimeout(timeout);
+  }, [hasStartedGPS]);
+
+  // Poll for GPS location updates
+  useEffect(() => {
+    const updateGPSLocation = async () => {
+      try {
+        const location = await gpsAPI.getLocation();
+        
+        if (location && location.latitude && location.longitude) {
+          setGpsLocation(location);
+          setGpsConnected(true);
+          
+          // Auto-center map on GPS position if following
+          if (isFollowingGPS) {
+            setCenter([location.longitude, location.latitude]);
+            
+            // Update bearing if available
+            if (location.bearing !== null && location.bearing !== undefined) {
+              setBearing(location.bearing);
+            }
+          }
+        } else {
+          setGpsConnected(false);
+        }
+      } catch (error) {
+        // Silently fail - GPS might not be available
+        console.debug('[Navigation] Could not fetch GPS location:', error.message);
+        setGpsConnected(false);
+      }
+    };
+
+    // Initial fetch
+    updateGPSLocation();
+
+    // Poll every 1 second for GPS updates
+    const interval = setInterval(updateGPSLocation, 1000);
+
+    return () => clearInterval(interval);
+  }, [isFollowingGPS]);
+
   // Music control handlers - SAME AS MEDIAPLAYER
   const handlePlayPause = async () => {
     try {
@@ -301,8 +379,42 @@ const NavigationPage = () => {
           pitch={pitch}
           style={getMapStyle()}
           onMapLoad={handleMapLoad}
+          currentPosition={gpsLocation}
         />
       </div>
+
+      {/* GPS Status Indicator */}
+      {gpsConnected && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            backgroundColor: 'rgba(74, 144, 226, 0.9)',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            zIndex: 10,
+          }}
+        >
+          <div
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: '#00ff00',
+              animation: 'pulse 2s infinite',
+            }}
+          />
+          GPS Connected
+        </div>
+      )}
 
       {/* Music Control Widget - shows when music is playing */}
       <MusicControlWidget

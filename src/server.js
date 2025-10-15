@@ -5,6 +5,7 @@ const gpioService = require('./services/gpio-service');
 const bluetoothService = require('./services/bluetooth-service');
 const bluetoothAudioService = require('./services/bluetooth-audio-service');
 const lightsService = require('./services/lights-service');
+const gpsService = require('./services/bluetooth-gps-service');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -19,6 +20,7 @@ gpioService.initialize().catch(console.error);
 bluetoothService.initialize().catch(console.error);
 bluetoothAudioService.initialize().catch(console.error);
 lightsService.initialize(server).catch(console.error);
+gpsService.initialize().catch(console.error);
 
 /**
  * GET /api/pins - Get all pin states
@@ -608,6 +610,68 @@ app.delete('/api/lights/history', (req, res) => {
   }
 });
 
+/**
+ * GPS API ENDPOINTS
+ */
+
+/**
+ * GET /api/gps/location - Get current GPS location
+ */
+app.get('/api/gps/location', (req, res) => {
+  try {
+    const location = gpsService.getCurrentLocation();
+    res.json(location || { error: 'No location data available' });
+  } catch (error) {
+    console.error('Error getting GPS location:', error);
+    res.status(500).json({ error: 'Failed to get GPS location' });
+  }
+});
+
+/**
+ * GET /api/gps/status - Get GPS connection status
+ */
+app.get('/api/gps/status', (req, res) => {
+  try {
+    const status = gpsService.getConnectionInfo();
+    res.json(status);
+  } catch (error) {
+    console.error('Error getting GPS status:', error);
+    res.status(500).json({ error: 'Failed to get GPS status' });
+  }
+});
+
+/**
+ * POST /api/gps/start - Start listening for GPS data from a device
+ */
+app.post('/api/gps/start', async (req, res) => {
+  try {
+    const { deviceAddress } = req.body;
+    
+    if (!deviceAddress) {
+      return res.status(400).json({ error: 'Device address is required' });
+    }
+    
+    await gpsService.startListening(deviceAddress);
+    res.json({ success: true, message: 'GPS listening started', deviceAddress });
+  } catch (error) {
+    console.error('Error starting GPS listener:', error);
+    res.status(500).json({ error: error.message || 'Failed to start GPS listener' });
+  }
+});
+
+/**
+ * POST /api/gps/stop - Stop listening for GPS data
+ */
+app.post('/api/gps/stop', async (req, res) => {
+  try {
+    await gpsService.stopListening();
+    res.json({ success: true, message: 'GPS listening stopped' });
+  } catch (error) {
+    console.error('Error stopping GPS listener:', error);
+    res.status(500).json({ error: error.message || 'Failed to stop GPS listener' });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
@@ -620,7 +684,8 @@ process.on('SIGINT', () => {
     gpioService.cleanup(),
     bluetoothService.cleanup(),
     bluetoothAudioService.cleanup(),
-    lightsService.cleanup()
+    lightsService.cleanup(),
+    gpsService.cleanup()
   ]).then(() => {
     process.exit(0);
   });
@@ -632,7 +697,8 @@ process.on('SIGTERM', () => {
     gpioService.cleanup(),
     bluetoothService.cleanup(),
     bluetoothAudioService.cleanup(),
-    lightsService.cleanup()
+    lightsService.cleanup(),
+    gpsService.cleanup()
   ]).then(() => {
     process.exit(0);
   });

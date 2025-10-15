@@ -316,8 +316,65 @@ class LightsAPI {
   }
 }
 
+/**
+ * GPS API service
+ */
+class GPSAPI {
+  constructor() {
+    this.baseURL = 'http://localhost:3001/api';
+  }
+
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`GPS API request failed for ${endpoint}:`, error);
+      throw error;
+    }
+  }
+
+  // Get current GPS location
+  async getLocation() {
+    return this.request('/gps/location');
+  }
+
+  // Get GPS connection status
+  async getStatus() {
+    return this.request('/gps/status');
+  }
+
+  // Start GPS listening
+  async startListening(deviceAddress) {
+    return this.request('/gps/start', {
+      method: 'POST',
+      body: JSON.stringify({ deviceAddress }),
+    });
+  }
+
+  // Stop GPS listening
+  async stopListening() {
+    return this.request('/gps/stop', {
+      method: 'POST',
+    });
+  }
+}
+
 // Export singleton instances
 export const gpioAPI = new GPIOAPI();
 export const bluetoothAPI = new BluetoothAPI();
 export const lightsAPI = new LightsAPI();
+export const gpsAPI = new GPSAPI();
 export default gpioAPI;
