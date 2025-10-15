@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { styles, colors } from '../styles';
+import { styles, getColors } from '../styles';
+import { useTheme } from '../contexts/ThemeContext';
 import { Play, Pause, SkipBack, SkipForward, Smartphone } from 'lucide-react';
 import { bluetoothAPI } from '../services/api';
+import { lastFmService } from '../services/lastfm-service';
 
 const MediaPlayer = () => {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
   // Media state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState({
@@ -14,6 +18,66 @@ const MediaPlayer = () => {
     position: 0
   });
   const [connectedDevice, setConnectedDevice] = useState(null);
+  
+  // Album art state
+  const [albumArtUrl, setAlbumArtUrl] = useState(null);
+  const [isLoadingArt, setIsLoadingArt] = useState(false);
+
+  // Save music state to localStorage for other components (like NavigationPage)
+  useEffect(() => {
+    try {
+      const musicState = {
+        isPlaying,
+        currentTrack,
+        albumArtUrl,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('nodenav-music-state', JSON.stringify(musicState));
+      console.log('[Media Player] Saved music state:', {
+        track: currentTrack.title,
+        artist: currentTrack.artist,
+        isPlaying
+      });
+    } catch (error) {
+      console.error('[Media Player] Failed to save music state:', error);
+    }
+  }, [isPlaying, currentTrack, albumArtUrl]);
+
+  // Fetch album art when track changes
+  useEffect(() => {
+    const fetchAlbumArt = async () => {
+      // Don't fetch if track is invalid
+      if (!currentTrack || 
+          currentTrack.title === 'No Track Playing' || 
+          currentTrack.title === 'Unknown' ||
+          currentTrack.artist === 'No Artist' ||
+          currentTrack.artist === 'Unknown') {
+        setAlbumArtUrl(null);
+        return;
+      }
+
+      setIsLoadingArt(true);
+      
+      try {
+        const artUrl = await lastFmService.getAlbumArt(
+          currentTrack.artist,
+          currentTrack.title,
+          currentTrack.album
+        );
+        setAlbumArtUrl(artUrl);
+        console.log('[Media Player] Album art fetched:', artUrl ? 'Success' : 'Not found');
+      } catch (error) {
+        console.error('[Media Player] Failed to fetch album art:', error);
+        setAlbumArtUrl(null);
+      } finally {
+        setIsLoadingArt(false);
+      }
+    };
+
+    // Debounce the fetch to avoid excessive API calls
+    const timeoutId = setTimeout(fetchAlbumArt, 500);
+    return () => clearTimeout(timeoutId);
+  }, [currentTrack.title, currentTrack.artist, currentTrack.album]);
 
   // Audio reference
   const audioRef = useRef(null);
@@ -51,8 +115,8 @@ const MediaPlayer = () => {
 
     checkConnection();
 
-    // Poll for media state updates every 2 seconds
-    statePollingInterval.current = setInterval(updateMediaState, 2000);
+    // Poll for media state updates every 1 second for responsive UI
+    statePollingInterval.current = setInterval(updateMediaState, 1000);
 
     return () => {
       if (progressInterval.current) {
@@ -241,7 +305,7 @@ const MediaPlayer = () => {
         )}
       </div>
 
-      {/* Album Art Placeholder */}
+      {/* Album Art */}
       <div style={{
         flex: '0 0 auto',
         display: 'flex',
@@ -261,44 +325,94 @@ const MediaPlayer = () => {
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
+          overflow: 'hidden',
+          position: 'relative',
         }}>
-          <div style={{
-            textAlign: 'center',
-          }}>
+          {isLoadingArt ? (
+            // Loading spinner
             <div style={{
-              width: '70px',
-              height: '70px',
-              margin: '0 auto 0.75rem',
-              backgroundColor: colors['bg-tertiary'],
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              textAlign: 'center',
             }}>
-              <svg
-                width="45"
-                height="45"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={colors['text-tertiary']}
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                margin: '0 auto 0.75rem',
+                border: `4px solid ${colors['bg-tertiary']}`,
+                borderTop: `4px solid ${colors.primary}`,
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+              }} />
+              <div style={{
+                ...styles.typography.caption,
+                color: colors['text-tertiary'],
+                fontSize: '0.75rem',
+              }}>
+                Loading...
+              </div>
             </div>
+          ) : albumArtUrl ? (
+            // Display album art
+            <img
+              src={albumArtUrl}
+              alt={`${currentTrack.album} by ${currentTrack.artist}`}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+              onError={(e) => {
+                console.error('[Media Player] Album art failed to load');
+                setAlbumArtUrl(null);
+              }}
+            />
+          ) : (
+            // Placeholder when no album art
             <div style={{
-              ...styles.typography.caption,
-              color: colors['text-tertiary'],
-              fontSize: '0.75rem',
+              textAlign: 'center',
             }}>
-              Album Artwork
+              <div style={{
+                width: '70px',
+                height: '70px',
+                margin: '0 auto 0.75rem',
+                backgroundColor: colors['bg-tertiary'],
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg
+                  width="45"
+                  height="45"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={colors['text-tertiary']}
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+              <div style={{
+                ...styles.typography.caption,
+                color: colors['text-tertiary'],
+                fontSize: '0.75rem',
+              }}>
+                No Artwork
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
+      
+      {/* Keyframe animation for loading spinner */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
 
       {/* Track Info */}
       <div style={{

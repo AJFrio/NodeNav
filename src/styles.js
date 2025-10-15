@@ -4,8 +4,8 @@
  * Changes in this file will propagate throughout the application
  */
 
-// Minimalist Black Theme Color tokens
-export const colors = {
+// Dark theme colors (default)
+const darkTheme = {
   // Primary accent (minimal blue)
   primary: '#ffffff',
   'primary-hover': '#f0f0f0',
@@ -26,12 +26,12 @@ export const colors = {
   info: '#ffffff',
   'info-hover': '#f0f0f0',
 
-  // Pure black background hierarchy
-  'bg-primary': '#000000',      // Pure black background
-  'bg-secondary': '#0a0a0a',    // Almost black
-  'bg-tertiary': '#111111',     // Dark gray
-  'bg-quaternary': '#1a1a1a',   // Medium gray
-  'bg-surface': '#222222',      // Light gray
+  // Dark gray background hierarchy
+  'bg-primary': '#282827',      // Darkest background
+  'bg-secondary': '#2f2f2e',    // Slightly lighter
+  'bg-tertiary': '#3a3a39',     // Medium dark
+  'bg-quaternary': '#454544',   // Medium gray
+  'bg-surface': '#505050',      // Lighter gray
 
   // White text hierarchy
   'text-primary': '#ffffff',     // Pure white
@@ -40,6 +40,51 @@ export const colors = {
   'text-muted': '#cccccc',       // Medium gray
   'text-disabled': '#999999',    // Darker gray
 };
+
+// Light theme colors (inverted)
+const lightTheme = {
+  // Primary accent (minimal blue)
+  primary: '#000000',
+  'primary-hover': '#1a1a1a',
+  'primary-light': '#333333',
+  'primary-dark': '#0a0a0a',
+
+  // Secondary accent (subtle gray)
+  secondary: '#cccccc',
+  'secondary-hover': '#bbbbbb',
+
+  // Status colors (minimal and monochromatic)
+  success: '#000000',
+  'success-hover': '#1a1a1a',
+  danger: '#000000',
+  'danger-hover': '#1a1a1a',
+  warning: '#000000',
+  'warning-hover': '#1a1a1a',
+  info: '#000000',
+  'info-hover': '#1a1a1a',
+
+  // Pure white background hierarchy (inverted)
+  'bg-primary': '#ffffff',      // Pure white background
+  'bg-secondary': '#f5f5f5',    // Almost white
+  'bg-tertiary': '#eeeeee',     // Light gray
+  'bg-quaternary': '#e5e5e5',   // Medium gray
+  'bg-surface': '#dddddd',      // Darker gray
+
+  // Black text hierarchy (inverted)
+  'text-primary': '#000000',     // Pure black
+  'text-secondary': '#0f0f0f',   // Off-black
+  'text-tertiary': '#1f1f1f',    // Dark gray
+  'text-muted': '#333333',       // Medium gray
+  'text-disabled': '#666666',    // Lighter gray
+};
+
+// Function to get colors based on theme
+export const getColors = (theme = 'dark') => {
+  return theme === 'dark' ? darkTheme : lightTheme;
+};
+
+// Default export for backward compatibility
+export const colors = darkTheme;
 
 // Common style patterns
 export const styles = {
@@ -56,7 +101,7 @@ export const styles = {
     border: `1px solid ${colors['bg-tertiary']}`,
     borderRadius: '0.5rem',
     padding: '1.5rem',
-    transition: 'background-color 150ms ease-in-out',
+    transition: 'all 300ms ease-in-out',
   },
 
   cardHover: {
@@ -350,6 +395,46 @@ export const styles = {
       },
     },
   },
+};
+
+// Helper function to get styles with theme-aware colors
+export const getStyles = (theme = 'dark') => {
+  const themeColors = getColors(theme);
+  
+  return {
+    ...styles,
+    // Override card styles with theme colors
+    card: {
+      backgroundColor: themeColors['bg-secondary'],
+      border: `1px solid ${themeColors['bg-tertiary']}`,
+      borderRadius: '0.5rem',
+      padding: '1.5rem',
+      transition: 'all 300ms ease-in-out',
+    },
+    // Override button styles with theme colors
+    button: {
+      primary: {
+        backgroundColor: themeColors.primary,
+        color: themeColors['bg-primary'],
+        border: 'none',
+        borderRadius: '0.5rem',
+        padding: '0.75rem 1.5rem',
+        fontWeight: '500',
+        cursor: 'pointer',
+        transition: 'all 300ms ease-in-out',
+      },
+      secondary: {
+        backgroundColor: themeColors['bg-tertiary'],
+        color: themeColors['text-primary'],
+        border: `1px solid ${themeColors['bg-quaternary']}`,
+        borderRadius: '0.5rem',
+        padding: '0.75rem 1.5rem',
+        fontWeight: '500',
+        cursor: 'pointer',
+        transition: 'all 300ms ease-in-out',
+      },
+    },
+  };
 };
 
 // Helper function to merge styles

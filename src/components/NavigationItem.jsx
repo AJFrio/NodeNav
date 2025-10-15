@@ -1,5 +1,6 @@
 import React from 'react';
-import { styles, mergeStyles, colors } from '../styles';
+import { styles, mergeStyles, getColors } from '../styles';
+import { useTheme } from '../contexts/ThemeContext';
 
 const NavigationItem = ({
   icon: Icon,
@@ -9,22 +10,27 @@ const NavigationItem = ({
   variant = 'bottombar', // 'sidebar' or 'bottombar'
   className = ""
 }) => {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
+  
   const getItemStyle = () => {
     if (variant === 'bottombar') {
       return mergeStyles(
         styles.navigation.item,
-        isActive ? styles.navigation.itemActive : styles.navigation.itemInactive,
         {
-          transition: 'all 150ms ease-in-out',
+          backgroundColor: isActive ? colors.primary : 'transparent',
+          color: isActive ? colors['bg-primary'] : colors['text-secondary'],
+          transition: 'all 300ms ease-in-out',
         }
       );
     } else {
       // Legacy sidebar support (if needed)
       return mergeStyles(
         styles.navigation.item,
-        isActive ? styles.navigation.itemActive : styles.navigation.itemInactive,
         {
-          transition: 'all 150ms ease-in-out',
+          backgroundColor: isActive ? colors.primary : 'transparent',
+          color: isActive ? colors['bg-primary'] : colors['text-secondary'],
+          transition: 'all 300ms ease-in-out',
         }
       );
     }
@@ -38,7 +44,10 @@ const NavigationItem = ({
       className={className}
     >
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <Icon size={variant === 'bottombar' ? 24 : 18} />
+        <Icon 
+          size={variant === 'bottombar' ? 24 : 18}
+          color={isActive ? colors['bg-primary'] : colors['text-secondary']}
+        />
       </div>
     </button>
   );

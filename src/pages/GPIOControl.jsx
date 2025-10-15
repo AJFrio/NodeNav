@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { lightsAPI } from '../services/api';
-import { styles, colors } from '../styles';
+import { styles, getColors } from '../styles';
+import { useTheme } from '../contexts/ThemeContext';
 import { Zap, Edit2, Check, X } from 'lucide-react';
 
 const GPIOControl = () => {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
   const [currentColor, setCurrentColor] = useState({ h: 0, s: 100, l: 50 });
   const [brightness, setBrightness] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -389,7 +392,7 @@ const GPIOControl = () => {
           ...styles.typography.h2,
           color: colors['text-primary'],
           marginBottom: '1.5rem',
-        }}>All Lights Control</h2>
+        }}>Light Control</h2>
         
         <div style={{
           display: 'flex',
@@ -403,8 +406,8 @@ const GPIOControl = () => {
           }}>
             <canvas
               ref={canvasRef}
-              width={300}
-              height={300}
+              width={400}
+              height={400}
               onMouseDown={handleColorWheelMouseDown}
               style={{
                 borderRadius: '50%',

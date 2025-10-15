@@ -1,5 +1,6 @@
 import React from 'react';
-import { styles, mergeStyles, colors } from '../styles';
+import { styles, mergeStyles, getColors } from '../styles';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SettingsButton = ({
   icon: Icon,
@@ -10,10 +11,18 @@ const SettingsButton = ({
   variant = 'primary', // primary, secondary, tertiary
   className = ""
 }) => {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
+  
   const getButtonStyle = () => {
     if (disabled) {
       return mergeStyles(
-        styles.card,
+        {
+          backgroundColor: colors['bg-secondary'],
+          border: `1px solid ${colors['bg-tertiary']}`,
+          borderRadius: '0.5rem',
+          padding: '1.5rem',
+        },
         {
           cursor: 'not-allowed',
           opacity: 0.6,
@@ -22,9 +31,12 @@ const SettingsButton = ({
     }
 
     const baseStyle = {
-      ...styles.card,
+      backgroundColor: colors['bg-secondary'],
+      border: `1px solid ${colors['bg-tertiary']}`,
+      borderRadius: '0.5rem',
+      padding: '1.5rem',
       cursor: 'pointer',
-      transition: 'all 200ms ease-in-out',
+      transition: 'all 300ms ease-in-out',
     };
 
     switch (variant) {
@@ -73,6 +85,7 @@ const SettingsButton = ({
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
         <Icon
           size={80}
+          color={colors['text-primary']}
           style={{
             transition: 'transform 200ms ease-in-out',
           }}
