@@ -52,8 +52,8 @@ def find_gps_service(address):
             
             print(f"SERVICE_FOUND:{name}|{protocol}|{port}", file=sys.stderr, flush=True)
             
-            # Look for our GPS service
-            if "NodeNav" in name or "GPS" in name:
+            # Look for our GPS service - check if name is not None
+            if name and ("NodeNav" in name or "GPS" in name):
                 if protocol == "RFCOMM" and port:
                     print(f"GPS_SERVICE_FOUND:{name} on channel {port}", file=sys.stderr, flush=True)
                     return port
@@ -96,6 +96,7 @@ def connect_gps(address):
             try:
                 print(f"CONNECTING:{address} channel {ch}", file=sys.stderr, flush=True)
                 
+                # Create a fresh socket for each attempt
                 sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
                 sock.settimeout(5)  # 5 second timeout for connection
                 sock.connect((address, ch))
@@ -106,20 +107,26 @@ def connect_gps(address):
                 
             except bluetooth.BluetoothError as e:
                 error_msg = str(e)
-                if "Connection refused" in error_msg:
+                if "Connection refused" in error_msg or "refused" in error_msg.lower():
                     print(f"CHANNEL_{ch}_REFUSED", file=sys.stderr, flush=True)
-                elif "Host is down" in error_msg:
+                elif "Host is down" in error_msg or "host is down" in error_msg.lower():
                     print(f"HOST_DOWN", file=sys.stderr, flush=True)
                     break  # No point trying other channels
+                elif "File descriptor in bad state" in error_msg or "bad state" in error_msg.lower():
+                    print(f"CHANNEL_{ch}_BAD_FD:Socket issue, retrying", file=sys.stderr, flush=True)
                 else:
                     print(f"CHANNEL_{ch}_ERROR:{error_msg}", file=sys.stderr, flush=True)
                 
+                # Always close and reset socket after failed attempt
                 if sock:
                     try:
                         sock.close()
                     except:
                         pass
                     sock = None
+                    
+                # Small delay between attempts to let Bluetooth stack recover
+                time.sleep(0.5)
                     
         if not connected:
             print("CONNECTION_FAILED:Could not connect to any RFCOMM channel", file=sys.stderr, flush=True)
