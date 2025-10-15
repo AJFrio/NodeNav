@@ -14,6 +14,7 @@ const NavigationPage = () => {
   const [musicState, setMusicState] = useState({
     isPlaying: false,
     currentTrack: null,
+    albumArtUrl: null,
   });
 
   // Check if 3D maps are enabled
@@ -117,15 +118,29 @@ const NavigationPage = () => {
         
         // Only show widget if there's a real track (not "No Track Playing")
         if (newTrack.title !== 'No Track Playing' && newTrack.title !== 'Unknown') {
+          // Try to get album art from localStorage (set by MediaPlayer)
+          let albumArtUrl = null;
+          try {
+            const savedState = localStorage.getItem('nodenav-music-state');
+            if (savedState) {
+              const parsed = JSON.parse(savedState);
+              albumArtUrl = parsed.albumArtUrl || null;
+            }
+          } catch (err) {
+            console.debug('[Navigation] Could not read album art from localStorage');
+          }
+
           setMusicState({
             isPlaying: newIsPlaying,
             currentTrack: newTrack,
+            albumArtUrl,
           });
         } else {
           // Hide widget if no valid track
           setMusicState({
             isPlaying: false,
             currentTrack: null,
+            albumArtUrl: null,
           });
         }
       } else {
@@ -133,6 +148,7 @@ const NavigationPage = () => {
         setMusicState({
           isPlaying: false,
           currentTrack: null,
+          albumArtUrl: null,
         });
       }
     } catch (error) {
@@ -292,6 +308,7 @@ const NavigationPage = () => {
       <MusicControlWidget
         isPlaying={musicState.isPlaying}
         currentTrack={musicState.currentTrack}
+        albumArtUrl={musicState.albumArtUrl}
         onPlayPause={handlePlayPause}
         onPrevious={handlePrevious}
         onNext={handleNext}

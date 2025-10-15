@@ -392,7 +392,7 @@ const GPIOControl = () => {
           ...styles.typography.h2,
           color: colors['text-primary'],
           marginBottom: '1.5rem',
-        }}>All Lights Control</h2>
+        }}>Light Control</h2>
         
         <div style={{
           display: 'flex',
@@ -406,8 +406,8 @@ const GPIOControl = () => {
           }}>
             <canvas
               ref={canvasRef}
-              width={300}
-              height={300}
+              width={400}
+              height={400}
               onMouseDown={handleColorWheelMouseDown}
               style={{
                 borderRadius: '50%',

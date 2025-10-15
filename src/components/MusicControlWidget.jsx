@@ -6,6 +6,7 @@ import { getColors } from '../styles';
 const MusicControlWidget = ({ 
   isPlaying = false,
   currentTrack = null,
+  albumArtUrl = null,
   onPlayPause = () => {},
   onPrevious = () => {},
   onNext = () => {},
@@ -35,36 +36,87 @@ const MusicControlWidget = ({
         transition: 'all 300ms ease-in-out',
       }}
     >
-      {/* Track Info */}
+      {/* Album Art and Track Info */}
       <div
         style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
           marginBottom: '0.75rem',
-          textAlign: 'center',
         }}
       >
+        {/* Small Album Art Thumbnail */}
         <div
           style={{
-            fontSize: '0.875rem',
-            fontWeight: '600',
-            color: colors['text-primary'],
-            marginBottom: '0.25rem',
+            width: '50px',
+            height: '50px',
+            minWidth: '50px',
+            backgroundColor: colors['bg-tertiary'],
+            borderRadius: '0.375rem',
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          {currentTrack.title}
+          {albumArtUrl ? (
+            <img
+              src={albumArtUrl}
+              alt="Album art"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={colors['text-tertiary']}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          )}
         </div>
+
+        {/* Track Info */}
         <div
           style={{
-            fontSize: '0.75rem',
-            color: colors['text-secondary'],
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            flex: 1,
+            minWidth: 0,
           }}
         >
-          {currentTrack.artist || 'Unknown Artist'}
+          <div
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              color: colors['text-primary'],
+              marginBottom: '0.25rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {currentTrack.title}
+          </div>
+          <div
+            style={{
+              fontSize: '0.75rem',
+              color: colors['text-secondary'],
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {currentTrack.artist || 'Unknown Artist'}
+          </div>
         </div>
       </div>
 
