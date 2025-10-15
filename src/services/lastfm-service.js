@@ -123,22 +123,28 @@ class LastFmService {
   }
 
   /**
-   * Extract the smallest image URL from Last.fm image array
+   * Extract the large image URL from Last.fm image array
    * Last.fm provides: small (34x34), medium (64x64), large (174x174), extralarge (300x300), mega (600x600)
-   * We'll use "small" size as requested
+   * We'll use "large" size (174x174) for better quality when scaled down
    */
   extractSmallestImage(images) {
     if (!images || !Array.isArray(images) || images.length === 0) {
       return null;
     }
 
-    // Try to find "small" size first
-    const smallImage = images.find(img => img.size === 'small');
-    if (smallImage && smallImage['#text']) {
-      return smallImage['#text'];
+    // Try to find "large" size first (174x174)
+    const largeImage = images.find(img => img.size === 'large');
+    if (largeImage && largeImage['#text']) {
+      return largeImage['#text'];
     }
 
-    // Fallback to first non-empty image
+    // Fallback to extralarge if large not available
+    const extraLargeImage = images.find(img => img.size === 'extralarge');
+    if (extraLargeImage && extraLargeImage['#text']) {
+      return extraLargeImage['#text'];
+    }
+
+    // Fallback to any non-empty image
     const firstImage = images.find(img => img['#text'] && img['#text'].length > 0);
     return firstImage ? firstImage['#text'] : null;
   }
