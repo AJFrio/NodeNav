@@ -165,17 +165,20 @@ const NavigationPage = () => {
         await bluetoothAPI.playMedia();
         console.log('[Navigation] Playing music');
       }
-      // Force update music state after a short delay
+      // Force refresh music state after a delay to ensure sync
       setTimeout(() => {
         const saved = localStorage.getItem('nodenav-music-state');
         if (saved) {
           const state = JSON.parse(saved);
-          setMusicState({
-            isPlaying: !wasPlaying, // Toggle immediately
-            currentTrack: state.currentTrack,
-          });
+          if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
+            setMusicState({
+              isPlaying: state.isPlaying, // Read actual state from localStorage
+              currentTrack: state.currentTrack,
+            });
+            console.log('[Navigation] Force updated play/pause state to:', state.isPlaying);
+          }
         }
-      }, 100);
+      }, 800); // Wait 800ms for backend to update
     } catch (error) {
       console.error('[Navigation] Play/Pause failed:', error);
     }
@@ -185,6 +188,20 @@ const NavigationPage = () => {
     try {
       await bluetoothAPI.previousTrack();
       console.log('[Navigation] Went to previous track');
+      // Force refresh music state after a delay to allow backend to update
+      setTimeout(() => {
+        const saved = localStorage.getItem('nodenav-music-state');
+        if (saved) {
+          const state = JSON.parse(saved);
+          if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
+            setMusicState({
+              isPlaying: state.isPlaying,
+              currentTrack: state.currentTrack,
+            });
+            console.log('[Navigation] Force updated after previous track');
+          }
+        }
+      }, 1000); // Wait 1 second for backend to update
     } catch (error) {
       console.error('[Navigation] Previous track failed:', error);
     }
@@ -194,6 +211,20 @@ const NavigationPage = () => {
     try {
       await bluetoothAPI.nextTrack();
       console.log('[Navigation] Skipped to next track');
+      // Force refresh music state after a delay to allow backend to update
+      setTimeout(() => {
+        const saved = localStorage.getItem('nodenav-music-state');
+        if (saved) {
+          const state = JSON.parse(saved);
+          if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
+            setMusicState({
+              isPlaying: state.isPlaying,
+              currentTrack: state.currentTrack,
+            });
+            console.log('[Navigation] Force updated after next track');
+          }
+        }
+      }, 1000); // Wait 1 second for backend to update
     } catch (error) {
       console.error('[Navigation] Next track failed:', error);
     }
