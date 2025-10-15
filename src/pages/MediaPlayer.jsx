@@ -27,8 +27,13 @@ const MediaPlayer = () => {
         timestamp: Date.now(),
       };
       localStorage.setItem('nodenav-music-state', JSON.stringify(musicState));
+      console.log('[Media Player] Saved music state:', {
+        track: currentTrack.title,
+        artist: currentTrack.artist,
+        isPlaying
+      });
     } catch (error) {
-      console.error('Failed to save music state:', error);
+      console.error('[Media Player] Failed to save music state:', error);
     }
   }, [isPlaying, currentTrack]);
 

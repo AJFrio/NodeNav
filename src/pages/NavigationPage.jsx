@@ -111,11 +111,29 @@ const NavigationPage = () => {
           const state = JSON.parse(saved);
           // Only show if there's a real track playing (not "No Track Playing")
           if (state.currentTrack && state.currentTrack.title !== 'No Track Playing') {
+            // Check if track actually changed
+            const trackChanged = 
+              !musicState.currentTrack || 
+              musicState.currentTrack.title !== state.currentTrack.title ||
+              musicState.currentTrack.artist !== state.currentTrack.artist;
+            
+            if (trackChanged || musicState.isPlaying !== state.isPlaying) {
+              console.log('[Navigation] Music state updated:', {
+                track: state.currentTrack.title,
+                artist: state.currentTrack.artist,
+                isPlaying: state.isPlaying
+              });
+            }
+            
             setMusicState({
               isPlaying: state.isPlaying,
               currentTrack: state.currentTrack,
             });
           } else {
+            // No valid track - hide widget
+            if (musicState.currentTrack !== null) {
+              console.log('[Navigation] No music playing, hiding widget');
+            }
             setMusicState({
               isPlaying: false,
               currentTrack: null,
@@ -123,41 +141,61 @@ const NavigationPage = () => {
           }
         }
       } catch (error) {
-        console.error('Failed to load music state:', error);
+        console.error('[Navigation] Failed to load music state:', error);
       }
     };
 
     // Initial load
     updateMusicState();
 
-    // Poll every second for updates
-    const interval = setInterval(updateMusicState, 1000);
+    // Poll every 500ms for more responsive updates
+    const interval = setInterval(updateMusicState, 500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [musicState]);
 
-  // Music control handlers
+  // Music control handlers - matching MediaPlayer implementation
   const handlePlayPause = async () => {
     try {
-      await bluetoothAPI.mediaControl(musicState.isPlaying ? 'pause' : 'play');
+      const wasPlaying = musicState.isPlaying;
+      if (wasPlaying) {
+        await bluetoothAPI.pauseMedia();
+        console.log('[Navigation] Paused music');
+      } else {
+        await bluetoothAPI.playMedia();
+        console.log('[Navigation] Playing music');
+      }
+      // Force update music state after a short delay
+      setTimeout(() => {
+        const saved = localStorage.getItem('nodenav-music-state');
+        if (saved) {
+          const state = JSON.parse(saved);
+          setMusicState({
+            isPlaying: !wasPlaying, // Toggle immediately
+            currentTrack: state.currentTrack,
+          });
+        }
+      }, 100);
     } catch (error) {
-      console.error('Failed to toggle play/pause:', error);
+      console.error('[Navigation] Play/Pause failed:', error);
     }
   };
 
   const handlePrevious = async () => {
     try {
-      await bluetoothAPI.mediaControl('previous');
+      await bluetoothAPI.previousTrack();
+      console.log('[Navigation] Went to previous track');
     } catch (error) {
-      console.error('Failed to go to previous track:', error);
+      console.error('[Navigation] Previous track failed:', error);
     }
   };
 
   const handleNext = async () => {
     try {
-      await bluetoothAPI.mediaControl('next');
+      await bluetoothAPI.nextTrack();
+      console.log('[Navigation] Skipped to next track');
     } catch (error) {
-      console.error('Failed to go to next track:', error);
+      console.error('[Navigation] Next track failed:', error);
     }
   };
 
