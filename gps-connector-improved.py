@@ -1,207 +1,162 @@
 #!/usr/bin/env python3
 """
-Improved GPS Bluetooth Connector
-Handles connection issues more robustly
+Improved GPS Connector for NodeNav
+Connects to Android device running NodeNav GPS service over Bluetooth RFCOMM
 """
 
 import sys
 import json
-import bluetooth
 import time
 import signal
-import subprocess
-import os
+import traceback
+
+try:
+    import bluetooth
+except ImportError:
+    print("ERROR:Bluetooth module not installed. Install with: sudo apt-get install python3-bluez", file=sys.stderr)
+    sys.exit(1)
 
 # Global socket for cleanup
 sock = None
 
 def signal_handler(sig, frame):
     """Handle termination signals"""
-    cleanup_socket()
+    global sock
+    if sock:
+        try:
+            sock.close()
+        except:
+            pass
+    print("DISCONNECTED", file=sys.stderr, flush=True)
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-def cleanup_socket():
-    """Properly cleanup the socket"""
-    global sock
-    if sock:
-        try:
-            sock.close()
-            print("SOCKET_CLOSED", file=sys.stderr, flush=True)
-        except:
-            pass
-        sock = None
-
-def release_existing_connections(address):
-    """Release any existing RFCOMM connections to this device"""
+def find_gps_service(address):
+    """
+    Find the NodeNav-GPS service on the Android device
+    Returns the RFCOMM channel number or None if not found
+    """
+    print(f"DISCOVERING_SERVICES:{address}", file=sys.stderr, flush=True)
+    
     try:
-        # Check for existing connections
-        result = subprocess.run(['rfcomm', '-a'], 
-                              capture_output=True, text=True, timeout=2)
+        # Search for services on the device
+        services = bluetooth.find_service(address=address)
         
-        if address.upper() in result.stdout.upper():
-            print(f"RELEASING_EXISTING:{address}", file=sys.stderr, flush=True)
-            # Try to release all RFCOMM devices
-            subprocess.run(['sudo', 'rfcomm', 'release', 'all'], 
-                         capture_output=True, timeout=2)
-            time.sleep(1)  # Give time for cleanup
-    except Exception as e:
-        # Not critical if this fails
-        pass
-
-def find_best_channel(address, quick=False):
-    """Find the best RFCOMM channel for the device"""
-    try:
-        if not quick:
-            print(f"SCANNING_SERVICES:{address}", file=sys.stderr, flush=True)
-            services = bluetooth.find_service(address=address)
+        for service in services:
+            name = service.get("name", "")
+            protocol = service.get("protocol", "")
+            port = service.get("port", 0)
+            service_id = service.get("service-id", "")
             
-            for svc in services:
-                port = svc.get("port")
-                name = svc.get("name")
-                
-                # Skip if name is None
-                if not name:
-                    continue
-                    
-                name_lower = name.lower()
-                
-                # Look for GPS/SPP services
-                if port and any(x in name_lower for x in ['spp', 'serial', 'gps', 'location', 'nodenav']):
-                    print(f"FOUND_SERVICE:port={port},name={name}", 
-                          file=sys.stderr, flush=True)
+            print(f"SERVICE_FOUND:{name}|{protocol}|{port}", file=sys.stderr, flush=True)
+            
+            # Look for our GPS service
+            if "NodeNav" in name or "GPS" in name:
+                if protocol == "RFCOMM" and port:
+                    print(f"GPS_SERVICE_FOUND:{name} on channel {port}", file=sys.stderr, flush=True)
                     return port
         
-        # Default to channel 1 (standard SPP)
-        return 1
+        # If no services found with SDP, try known SPP UUID
+        # Standard Serial Port Profile UUID
+        SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB"
         
+        print(f"TRYING_SPP_UUID", file=sys.stderr, flush=True)
+        services = bluetooth.find_service(uuid=SPP_UUID, address=address)
+        
+        if services:
+            # Use the first SPP service found
+            port = services[0].get("port", 1)
+            print(f"SPP_SERVICE_FOUND:Using channel {port}", file=sys.stderr, flush=True)
+            return port
+            
     except Exception as e:
-        print(f"SERVICE_SCAN_ERROR:{str(e)}", file=sys.stderr, flush=True)
-        return 1
+        print(f"SERVICE_DISCOVERY_ERROR:{str(e)}", file=sys.stderr, flush=True)
+    
+    return None
 
-def reset_bluetooth_for_device(address):
-    """Reset Bluetooth connection for specific device"""
+def connect_gps(address):
+    """Connect to GPS device and stream data"""
+    global sock
+    
     try:
-        # Disconnect device if connected
-        subprocess.run(['bluetoothctl', 'disconnect', address], 
-                      capture_output=True, timeout=3)
-        time.sleep(1)
+        # Try to find the service first
+        channel = find_gps_service(address)
         
-        # Reconnect
-        subprocess.run(['bluetoothctl', 'connect', address], 
-                      capture_output=True, timeout=5)
-        time.sleep(2)
+        if not channel:
+            print(f"NO_SERVICE_FOUND:Trying default channels", file=sys.stderr, flush=True)
+            # Try common RFCOMM channels if service discovery fails
+            channels_to_try = [1, 2, 3, 4, 5]
+        else:
+            channels_to_try = [channel]
         
-        print(f"BLUETOOTH_RESET:{address}", file=sys.stderr, flush=True)
-        return True
-    except Exception as e:
-        print(f"RESET_ERROR:{str(e)}", file=sys.stderr, flush=True)
-        return False
-
-def connect_with_retry(address, channel, max_retries=3):
-    """Try to connect with retries and recovery"""
-    global sock
-    
-    for attempt in range(max_retries):
-        try:
-            # Cleanup any existing socket
-            cleanup_socket()
-            
-            # Create new socket
-            sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            
-            # Set timeout for connection
-            sock.settimeout(10)
-            
-            print(f"CONNECT_ATTEMPT:{attempt+1}/{max_retries},channel={channel}", 
-                  file=sys.stderr, flush=True)
-            
-            # Try to connect
-            sock.connect((address, channel))
-            
-            # Connection successful
-            print("CONNECTED", file=sys.stderr, flush=True)
-            
-            # Remove timeout for data streaming
-            sock.settimeout(None)
-            
-            return True
-            
-        except bluetooth.BluetoothError as e:
-            error_str = str(e)
-            print(f"CONNECT_ERROR:{error_str}", file=sys.stderr, flush=True)
-            
-            # Handle specific errors
-            if "[Errno 77]" in error_str or "File descriptor" in error_str:
-                # Socket in bad state - need cleanup
-                cleanup_socket()
+        connected = False
+        for ch in channels_to_try:
+            try:
+                print(f"CONNECTING:{address} channel {ch}", file=sys.stderr, flush=True)
                 
-                if attempt == 0:
-                    # First attempt - try releasing existing connections
-                    release_existing_connections(address)
-                elif attempt == 1:
-                    # Second attempt - try resetting Bluetooth
-                    reset_bluetooth_for_device(address)
-                    time.sleep(2)
-                    
-            elif "[Errno 112]" in error_str or "Host is down" in error_str:
-                # Device disconnected - try to reconnect at system level
-                reset_bluetooth_for_device(address)
+                sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+                sock.settimeout(5)  # 5 second timeout for connection
+                sock.connect((address, ch))
                 
-            elif "[Errno 111]" in error_str or "Connection refused" in error_str:
-                # Wrong channel or service not available
-                if attempt == 0 and channel == 1:
-                    # Try to find the correct channel
-                    new_channel = find_best_channel(address, quick=True)
-                    if new_channel != channel:
-                        channel = new_channel
-                        print(f"TRYING_CHANNEL:{channel}", file=sys.stderr, flush=True)
-                
-            # Wait before retry
-            if attempt < max_retries - 1:
-                wait_time = (attempt + 1) * 2
-                print(f"RETRY_WAIT:{wait_time}s", file=sys.stderr, flush=True)
-                time.sleep(wait_time)
-        
-        except Exception as e:
-            print(f"UNEXPECTED_ERROR:{str(e)}", file=sys.stderr, flush=True)
-            cleanup_socket()
-            time.sleep(2)
-    
-    return False
-
-def stream_gps_data():
-    """Stream GPS data from the connected socket"""
-    global sock
-    
-    if not sock:
-        return
-    
-    buffer = ""
-    last_data_time = time.time()
-    
-    while True:
-        try:
-            # Check for timeout (no data for 30 seconds)
-            if time.time() - last_data_time > 30:
-                print("DATA_TIMEOUT", file=sys.stderr, flush=True)
+                print(f"CONNECTED:Channel {ch}", file=sys.stderr, flush=True)
+                connected = True
                 break
-            
-            # Set a short timeout to check periodically
-            sock.settimeout(1.0)
-            
+                
+            except bluetooth.BluetoothError as e:
+                error_msg = str(e)
+                if "Connection refused" in error_msg:
+                    print(f"CHANNEL_{ch}_REFUSED", file=sys.stderr, flush=True)
+                elif "Host is down" in error_msg:
+                    print(f"HOST_DOWN", file=sys.stderr, flush=True)
+                    break  # No point trying other channels
+                else:
+                    print(f"CHANNEL_{ch}_ERROR:{error_msg}", file=sys.stderr, flush=True)
+                
+                if sock:
+                    try:
+                        sock.close()
+                    except:
+                        pass
+                    sock = None
+                    
+        if not connected:
+            print("CONNECTION_FAILED:Could not connect to any RFCOMM channel", file=sys.stderr, flush=True)
+            sys.exit(1)
+        
+        # Connection successful - remove timeout for streaming
+        sock.settimeout(None)
+        
+        # Send initial handshake/identification
+        try:
+            handshake = json.dumps({"type": "client", "name": "NodeNav-PC"}) + "\n"
+            sock.send(handshake.encode('utf-8'))
+            print("HANDSHAKE_SENT", file=sys.stderr, flush=True)
+        except:
+            # Handshake optional - some servers don't expect it
+            pass
+        
+        # Start receiving data
+        buffer = ""
+        last_heartbeat = time.time()
+        
+        while True:
             try:
                 # Read data in chunks
-                data = sock.recv(1024).decode('utf-8', errors='ignore')
+                data = sock.recv(1024)
                 
                 if not data:
-                    print("CONNECTION_LOST", file=sys.stderr, flush=True)
+                    print("CONNECTION_LOST:No data received", file=sys.stderr, flush=True)
                     break
                 
-                last_data_time = time.time()
-                buffer += data
+                # Decode and add to buffer
+                try:
+                    decoded = data.decode('utf-8', errors='ignore')
+                    buffer += decoded
+                except:
+                    print(f"DECODE_ERROR:Skipping malformed data", file=sys.stderr, flush=True)
+                    continue
                 
                 # Process complete JSON lines
                 while '\n' in buffer:
@@ -209,74 +164,73 @@ def stream_gps_data():
                     line = line.strip()
                     
                     if line:
-                        # Validate JSON before sending
+                        # Validate and output JSON
                         try:
                             parsed = json.loads(line)
-                            # Add timestamp if missing
-                            if 'timestamp' not in parsed:
-                                parsed['timestamp'] = int(time.time() * 1000)
-                            print(json.dumps(parsed), flush=True)
+                            
+                            # Check if it's GPS data
+                            if "latitude" in parsed and "longitude" in parsed:
+                                # Valid GPS data - output it
+                                print(line, flush=True)
+                                last_heartbeat = time.time()
+                            else:
+                                # Other data type - log it
+                                print(f"NON_GPS_DATA:{line[:50]}", file=sys.stderr, flush=True)
+                                
                         except json.JSONDecodeError:
                             print(f"PARSE_ERROR:{line[:50]}", file=sys.stderr, flush=True)
-                            
-            except bluetooth.btcommon.BluetoothError as e:
-                if "timed out" in str(e).lower():
-                    # Timeout is expected, continue
-                    continue
-                else:
-                    raise
-                    
-        except bluetooth.BluetoothError as e:
-            print(f"BT_ERROR:{str(e)}", file=sys.stderr, flush=True)
-            break
-        except Exception as e:
-            print(f"STREAM_ERROR:{str(e)}", file=sys.stderr, flush=True)
-            time.sleep(0.1)
-
-def main(address):
-    """Main connection logic"""
-    try:
-        # Find best channel
-        channel = find_best_channel(address, quick=False)
-        
-        # Try to connect with discovered channel
-        if connect_with_retry(address, channel):
-            # Stream data
-            stream_gps_data()
-        else:
-            # If that fails, try common GPS ports
-            print(f"TRYING_COMMON_PORTS", file=sys.stderr, flush=True)
-            common_ports = [17, 1, 2, 3, 4, 5]  # 17 is common for GPS services
-            
-            for port in common_ports:
-                if port == channel:
-                    continue  # Already tried
-                    
-                print(f"TRYING_PORT:{port}", file=sys.stderr, flush=True)
-                cleanup_socket()  # Clean up before each attempt
                 
-                if connect_with_retry(address, port, max_retries=1):
-                    # Stream data
-                    stream_gps_data()
-                    return
+                # Check for connection timeout (no data for 30 seconds)
+                if time.time() - last_heartbeat > 30:
+                    print("TIMEOUT:No GPS data received for 30 seconds", file=sys.stderr, flush=True)
+                    break
                     
-                time.sleep(1)
-            
-            print(f"CONNECTION_FAILED:Could not establish connection on any port", 
-                  file=sys.stderr, flush=True)
-            sys.exit(1)
-            
+            except bluetooth.BluetoothError as e:
+                print(f"BT_ERROR:{str(e)}", file=sys.stderr, flush=True)
+                break
+            except KeyboardInterrupt:
+                print("INTERRUPTED", file=sys.stderr, flush=True)
+                break
+            except Exception as e:
+                print(f"ERROR:{str(e)}", file=sys.stderr, flush=True)
+                traceback.print_exc(file=sys.stderr)
+                time.sleep(0.1)
+                
+    except bluetooth.BluetoothError as e:
+        print(f"CONNECTION_FAILED:{str(e)}", file=sys.stderr, flush=True)
+        sys.exit(1)
     except Exception as e:
         print(f"FATAL_ERROR:{str(e)}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
         sys.exit(1)
     finally:
-        cleanup_socket()
+        if sock:
+            try:
+                sock.close()
+            except:
+                pass
         print("DISCONNECTED", file=sys.stderr, flush=True)
 
-if __name__ == "__main__":
+def main():
+    """Main entry point"""
     if len(sys.argv) != 2:
-        print("ERROR:Invalid arguments", file=sys.stderr, flush=True)
+        print("Usage: python3 gps-connector-improved.py <bluetooth_address>", file=sys.stderr)
+        print("Example: python3 gps-connector-improved.py AA:BB:CC:DD:EE:FF", file=sys.stderr)
         sys.exit(1)
     
     address = sys.argv[1]
-    main(address)
+    
+    # Validate address format
+    if not all(c in "0123456789ABCDEFabcdef:" for c in address):
+        print(f"ERROR:Invalid Bluetooth address format: {address}", file=sys.stderr, flush=True)
+        sys.exit(1)
+    
+    if address.count(':') != 5:
+        print(f"ERROR:Invalid Bluetooth address format: {address}", file=sys.stderr, flush=True)
+        sys.exit(1)
+    
+    # Start connection
+    connect_gps(address)
+
+if __name__ == "__main__":
+    main()
