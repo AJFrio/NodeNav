@@ -175,14 +175,6 @@ function AppContent() {
               maxWidth: '50rem',
               width: '100%',
             }}>
-              <p style={{
-                fontSize: '1.125rem',
-                color: colors['text-secondary'],
-                marginBottom: '3rem',
-                fontWeight: '300',
-              }}>
-                Open Source Headunit Interface
-              </p>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
