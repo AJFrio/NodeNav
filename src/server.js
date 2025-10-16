@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const os = require('os');
 const gpioService = require('./services/gpio-service');
 const bluetoothService = require('./services/bluetooth-service');
 const bluetoothAudioService = require('./services/bluetooth-audio-service');
@@ -15,6 +16,14 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize services
+const isLinux = os.platform() === 'linux';
+if (isLinux) {
+  console.log('Linux platform detected. Initializing hardware services.');
+} else {
+  console.log('Non-Linux platform detected. Hardware services will be unavailable.');
+  console.log('Application is running in GUI-only/simulation mode.');
+}
+
 gpioService.initialize().catch(console.error);
 bluetoothService.initialize().catch(console.error);
 bluetoothAudioService.initialize().catch(console.error);

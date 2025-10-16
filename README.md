@@ -13,12 +13,12 @@ A modern, minimalist car headunit interface built with React and Node.js. Contro
 - **Media Controls**: Play, pause, skip tracks directly from the interface
 - **Live Metadata**: View song title, artist, album, and playback progress in real-time
 - **AVRCP Support**: Full integration with your phone's media apps (Spotify, Apple Music, etc.)
-- **Cross-Platform**: Works on Windows (via PowerShell + WinRT APIs) and Linux (via BlueZ)
+- **Linux Focused**: Built and optimized for Linux-based systems (via BlueZ).
 
 ### Bluetooth Device Management
 - **Device Discovery**: Scan for nearby Bluetooth devices with live updates
 - **Pairing & Connection**: Easy device pairing and connection management directly from the app
-- **Native Platform Support**: BlueZ/D-Bus on Linux, PowerShell/WMI on Windows
+- **Native Platform Support**: BlueZ/D-Bus on Linux.
 - **Device Information**: View connection status, device type, signal strength, and last seen
 - **Smart Device Detection**: Automatically identifies phones, headphones, speakers, and more
 - **History Tracking**: Monitor all Bluetooth operations with detailed logs
@@ -83,26 +83,8 @@ The application will be available at `http://localhost:5173`
 
 ## Platform-Specific Setup
 
-### Windows Setup !FUNCTIONALITY IS SPOTTY AT BEST, LINUX IS RECOMMENDED!
-
-1. Run the setup verification script:
-```powershell
-.\setup-windows-bluetooth.ps1
-```
-
-2. Pair your phone:
-   - Open **Settings** → **Bluetooth & devices**
-   - Add your phone as a device
-   - Accept pairing on both devices
-
-3. Start NodeNav and connect your phone in **Settings** → **Bluetooth**
-
-**Requirements:**
-- Windows 10 version 1809 (build 17763) or later
-- Bluetooth service running
-- PowerShell (included with Windows)
-
-**Detailed Guide**: See [WINDOWS_TESTING_GUIDE.md](WINDOWS_TESTING_GUIDE.md)
+### Windows and macOS
+On Windows and macOS, the application runs in a GUI-only testing mode. Hardware-related features like Bluetooth and GPIO control are disabled. This is useful for developing and testing the user interface without requiring a Linux environment.
 
 ### Linux Setup
 
@@ -145,8 +127,8 @@ chmod +x setup-bluetooth-audio.sh
 - PulseAudio 10.0+ or PipeWire 0.3+ (for audio streaming)
 
 **Detailed Guides**: 
-- [LINUX_BLUETOOTH_GUIDE.md](LINUX_BLUETOOTH_GUIDE.md) - Device management (NEW!)
-- [BLUETOOTH_AUDIO_SETUP.md](BLUETOOTH_AUDIO_SETUP.md) - Audio streaming setup
+- [LINUX_BLUETOOTH_GUIDE.md](docs/LINUX_BLUETOOTH_GUIDE.md) - Device management (NEW!)
+- [BLUETOOTH_AUDIO_SETUP.md](docs/BLUETOOTH_AUDIO_SETUP.md) - Audio streaming setup
 
 ### Raspberry Pi GPIO Setup
 
@@ -237,7 +219,6 @@ Use the bottom navigation bar to quickly switch between:
 - CORS middleware
 
 **Platform Integration:**
-- **Windows**: PowerShell + Windows Runtime APIs
 - **Linux**: BlueZ (D-Bus API) + PulseAudio/PipeWire
 - **GPIO**: Native GPIO libraries (Raspberry Pi)
 
@@ -265,20 +246,17 @@ NodeNav/
 │   │   ├── api.js                 # Frontend API client
 │   │   ├── bluetooth-service.js   # Bluetooth device management (platform router)
 │   │   ├── bluetooth-device-linux.js   # Linux Bluetooth (BlueZ/D-Bus) - NEW!
-│   │   ├── bluetooth-device-windows.js # Windows Bluetooth (PowerShell)
 │   │   ├── bluetooth-audio-service.js  # Audio streaming (platform router)
-│   │   ├── bluetooth-audio-windows.js  # Windows audio implementation
 │   │   ├── gpio-service.js        # GPIO control
 │   │   └── server.js              # Express backend server
 │   │
 ├── docs/                          # Documentation
 │   ├── BLUETOOTH_AUDIO_SETUP.md
 │   ├── BLUETOOTH_AUDIO_IMPLEMENTATION.md
-│   ├── WINDOWS_BLUETOOTH_SETUP.md
-│   └── WINDOWS_TESTING_GUIDE.md
+│   ├── LINUX_BLUETOOTH_GUIDE.md
+│   └── LINUX_BLUETOOTH_IMPLEMENTATION.md
 │
 ├── setup-bluetooth-audio.sh       # Linux setup script
-├── setup-windows-bluetooth.ps1    # Windows setup script
 ├── package.json
 ├── vite.config.js
 ├── tailwind.config.js
@@ -348,12 +326,11 @@ npm run start
 
 ### Platform-Specific Guides
 
-- **Linux Bluetooth**: See [LINUX_BLUETOOTH_GUIDE.md](LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Complete device management
-- **Linux Audio**: See [BLUETOOTH_AUDIO_SETUP.md](BLUETOOTH_AUDIO_SETUP.md)
-- **Windows**: See [WINDOWS_TESTING_GUIDE.md](WINDOWS_TESTING_GUIDE.md)
+- **Linux Bluetooth**: See [LINUX_BLUETOOTH_GUIDE.md](docs/LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Complete device management
+- **Linux Audio**: See [BLUETOOTH_AUDIO_SETUP.md](docs/BLUETOOTH_AUDIO_SETUP.md)
 - **Implementation Details**: 
-  - [LINUX_BLUETOOTH_IMPLEMENTATION.md](LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!**
-  - [BLUETOOTH_AUDIO_IMPLEMENTATION.md](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
+  - [LINUX_BLUETOOTH_IMPLEMENTATION.md](docs/LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!**
+  - [BLUETOOTH_AUDIO_IMPLEMENTATION.md](docs/BLUETOOTH_AUDIO_IMPLEMENTATION.md)
 
 ## Features Roadmap
 
@@ -364,7 +341,7 @@ npm run start
 - Live track metadata
 - GPIO pin control
 - Minimalist UI theme
-- Cross-platform support (Windows/Linux)
+- Cross-platform support (Linux-first)
 
 ### Upcoming Features
 
@@ -431,7 +408,6 @@ This project is licensed under the ISC License. See the LICENSE file for details
 
 - **BlueZ Project** - Linux Bluetooth stack
 - **PulseAudio/PipeWire** - Audio routing on Linux
-- **Windows Runtime APIs** - Bluetooth control on Windows
 - **React Team** - Amazing UI framework
 - **Vite Team** - Lightning-fast build tool
 - **Tailwind CSS** - Utility-first CSS framework
@@ -441,12 +417,10 @@ This project is licensed under the ISC License. See the LICENSE file for details
 ## Documentation
 
 - [Main README](README.md) - This file
-- [Linux Bluetooth Guide](LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Device management on Linux
-- [Linux Bluetooth Implementation](LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!** Technical details
-- [Bluetooth Audio Setup (Linux)](BLUETOOTH_AUDIO_SETUP.md)
-- [Windows Bluetooth Setup](WINDOWS_BLUETOOTH_SETUP.md)
-- [Windows Testing Guide](WINDOWS_TESTING_GUIDE.md)
-- [Bluetooth Audio Implementation Details](BLUETOOTH_AUDIO_IMPLEMENTATION.md)
+- [Linux Bluetooth Guide](docs/LINUX_BLUETOOTH_GUIDE.md) - **NEW!** Device management on Linux
+- [Linux Bluetooth Implementation](docs/LINUX_BLUETOOTH_IMPLEMENTATION.md) - **NEW!** Technical details
+- [Bluetooth Audio Setup (Linux)](docs/BLUETOOTH_AUDIO_SETUP.md)
+- [Bluetooth Audio Implementation Details](docs/BLUETOOTH_AUDIO_IMPLEMENTATION.md)
 
 ## Useful Links
 
@@ -466,7 +440,7 @@ This project is licensed under the ISC License. See the LICENSE file for details
 
 - **Startup Time**: < 3 seconds
 - **UI Response**: Instant (React optimizations)
-- **Bluetooth Commands**: 50-100ms on Windows, 20-50ms on Linux
+- **Bluetooth Commands**: 20-50ms on Linux
 - **Metadata Updates**: Every 2 seconds
 - **Audio Latency**: 100-300ms (Bluetooth standard)
 
@@ -480,13 +454,14 @@ This project is licensed under the ISC License. See the LICENSE file for details
 
 ## Platform Support
 
-| Feature | Windows 10/11 | Linux | macOS | Raspberry Pi |
-|---------|---------------|-------|-------|--------------|
-| Media Player | Full | Full | Planned | Full |
-| Bluetooth Device Mgmt | Native | **Native (NEW!)** | Planned | Native |
-| Bluetooth Audio | Full | Full | Planned | Full |
-| GPIO | N/A | Full | N/A | Full |
+| Feature | Linux | macOS | Raspberry Pi | Windows 10/11 |
+|---------|-------|-------|--------------|---------------|
+| Media Player | Full | GUI Only | Full | GUI Only |
+| Bluetooth Device Mgmt | **Native (NEW!)** | GUI Only | Native | GUI Only |
+| Bluetooth Audio | Full | GUI Only | Full | GUI Only |
+| GPIO | Full | N/A | Full | N/A |
 | UI | Full | Full | Full | Full |
+
 
 ## Support
 

@@ -12,10 +12,7 @@ const platform = process.platform;
 // Load platform-specific implementation
 let bluetoothAudioService;
 
-if (platform === 'win32') {
-  console.log('[Bluetooth Audio] Loading Windows implementation');
-  bluetoothAudioService = require('./bluetooth-audio-windows');
-} else if (platform === 'linux') {
+if (platform === 'linux') {
   console.log('[Bluetooth Audio] Loading Linux implementation');
   
   // Keep the Linux implementation here
