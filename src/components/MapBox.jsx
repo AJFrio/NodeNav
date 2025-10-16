@@ -13,6 +13,7 @@ const MapBox = ({
   pitch = 0, // Tilt angle in degrees (0-85 in v3)
   style = 'mapbox://styles/mapbox/streets-v12', // Default to streets style
   onMapLoad = null,
+  route = null,
   ...props
 }) => {
   const mapContainer = useRef(null);
@@ -68,6 +69,46 @@ const MapBox = ({
       duration: 1000, // Smooth transition over 1 second
     });
   }, [center, zoom, bearing, pitch, mapLoaded]);
+
+  // Draw route on map
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !route) return;
+
+    const routeId = 'route';
+    const source = map.current.getSource(routeId);
+
+    if (source) {
+      source.setData({
+        type: 'Feature',
+        properties: {},
+        geometry: route,
+      });
+    } else {
+      map.current.addSource(routeId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: route,
+        },
+      });
+
+      map.current.addLayer({
+        id: routeId,
+        type: 'line',
+        source: routeId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': '#3887be',
+          'line-width': 5,
+          'line-opacity': 0.75,
+        },
+      });
+    }
+  }, [route, mapLoaded]);
 
   return (
     <div

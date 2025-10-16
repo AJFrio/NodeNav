@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MapBox from '../components/MapBox';
 import MusicControlWidget from '../components/MusicControlWidget';
+import Directions from '../components/Directions';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
 import { bluetoothAPI } from '../services/api';
+import SearchIcon from '../components/icons/SearchIcon';
 
 const NavigationPage = () => {
   const { theme, isDark } = useTheme();
   const colors = getColors(theme);
   const mapInstanceRef = useRef(null);
+  const [destination, setDestination] = useState(null);
+  const [route, setRoute] = useState(null);
+  const [showDirections, setShowDirections] = useState(false);
 
   // Music state from localStorage
   const [musicState, setMusicState] = useState({
@@ -204,6 +209,26 @@ const NavigationPage = () => {
     }
   };
 
+  const handleDestinationSelect = async (coords) => {
+    setDestination(coords);
+    setShowDirections(false);
+
+    const start = center; // Using current map center as start
+    const end = coords;
+    const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${accessToken}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.routes) {
+        setRoute(data.routes[0].geometry);
+      }
+    } catch (err) {
+      console.error('Failed to fetch directions:', err);
+    }
+  };
+
   // Show error if token is missing
   if (!hasToken) {
     return (
@@ -287,6 +312,29 @@ const NavigationPage = () => {
         overflow: 'hidden',
       }}
     >
+      {/* Search Button */}
+      <button
+        data-testid="search-button"
+        onClick={() => setShowDirections(!showDirections)}
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          zIndex: 10,
+          background: colors['bg-secondary'],
+          border: 'none',
+          borderRadius: '50%',
+          padding: 12,
+          cursor: 'pointer',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
+        }}
+      >
+        <SearchIcon color={colors['text-primary']} size={24} />
+      </button>
+
+      {/* Directions Search */}
+      {showDirections && <Directions onDestinationSelect={handleDestinationSelect} />}
+
       {/* Map Container */}
       <div
         style={{
@@ -301,6 +349,7 @@ const NavigationPage = () => {
           pitch={pitch}
           style={getMapStyle()}
           onMapLoad={handleMapLoad}
+          route={route}
         />
       </div>
 
