@@ -3,6 +3,7 @@ import MapBox from '../components/MapBox';
 import MediaControlPanel from '../components/MediaControlPanel';
 import LightControlPanel from '../components/LightControlPanel';
 import { useTheme } from '../contexts/ThemeContext';
+import useMapSync from '../hooks/useMapSync';
 import { getColors } from '../styles';
 
 const HomePage = () => {
@@ -19,11 +20,14 @@ const HomePage = () => {
     }
   });
 
-  // Identical map starting state to NavigationPage
-  const [center, setCenter] = useState([-105.2705, 40.0150]); // Boulder, CO
-  const [zoom, setZoom] = useState(16.5);
-  const [bearing, setBearing] = useState(0);
-  const [pitch, setPitch] = useState(60);
+  const [mapState, updateMapState] = useMapSync({
+    center: [-105.2705, 40.0150], // Boulder, CO
+    zoom: 16.5,
+    bearing: 0,
+    pitch: 60,
+    route: null,
+  });
+  const { center, zoom, bearing, pitch, route } = mapState;
 
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -52,6 +56,20 @@ const HomePage = () => {
 
   const handleMapLoad = (mapInstance) => {
     mapInstanceRef.current = mapInstance;
+
+    const updateStoredMapState = () => {
+      const newCenter = mapInstance.getCenter().toArray();
+      const newZoom = mapInstance.getZoom();
+      const newBearing = mapInstance.getBearing();
+      const newPitch = mapInstance.getPitch();
+      updateMapState({ center: newCenter, zoom: newZoom, bearing: newBearing, pitch: newPitch });
+    };
+
+    mapInstance.on('moveend', updateStoredMapState);
+    mapInstance.on('zoomend', updateStoredMapState);
+    mapInstance.on('rotateend', updateStoredMapState);
+    mapInstance.on('pitchend', updateStoredMapState);
+
     if (enable3DMaps) {
       mapInstance.on('style.load', () => {
         try {
@@ -119,6 +137,7 @@ const HomePage = () => {
           pitch={pitch}
           style={getMapStyle()}
           onMapLoad={handleMapLoad}
+          route={route}
         />
       </div>
 

@@ -3,18 +3,28 @@ import mapboxgl from 'mapbox-gl';
 import MapBox from '../components/MapBox';
 import MusicControlWidget from '../components/MusicControlWidget';
 import Directions from '../components/Directions';
+import TripControls from '../components/TripControls';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
 import { bluetoothAPI } from '../services/api';
+import useMapSync from '../hooks/useMapSync';
 import SearchIcon from '../components/icons/SearchIcon';
 
 const NavigationPage = () => {
   const { theme, isDark } = useTheme();
   const colors = getColors(theme);
   const mapInstanceRef = useRef(null);
-  const [destination, setDestination] = useState(null);
-  const [route, setRoute] = useState(null);
+  const [mapState, updateMapState] = useMapSync({
+    center: [-105.2705, 40.0150], // Boulder, CO
+    zoom: 16.5,
+    bearing: 0,
+    pitch: 60,
+    route: null,
+    destination: null,
+  });
+  const { center, zoom, bearing, pitch, route, destination } = mapState;
   const [showDirections, setShowDirections] = useState(false);
+  const [tripState, setTripState] = useState('inactive'); // inactive, prompting, active
 
   // Music state from localStorage
   const [musicState, setMusicState] = useState({
@@ -33,11 +43,6 @@ const NavigationPage = () => {
     }
   });
 
-  // Map state - Navigation view optimized for driving
-  const [center, setCenter] = useState([-105.2705, 40.0150]); // Boulder, CO
-  const [zoom, setZoom] = useState(16.5); // Zoomed in for navigation
-  const [bearing, setBearing] = useState(0); // Rotation (can be set to compass heading)
-  const [pitch, setPitch] = useState(60); // 60 degrees tilt for 3rd person car view
 
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -71,20 +76,26 @@ const NavigationPage = () => {
 
   const handleMapLoad = (mapInstance) => {
     console.log('Map loaded successfully');
-    
-    // Store map instance in a ref so we can update it when theme changes
     mapInstanceRef.current = mapInstance;
-    
-    // Only configure Standard style if 3D is enabled
+
+    const updateStoredMapState = () => {
+      const newCenter = mapInstance.getCenter().toArray();
+      const newZoom = mapInstance.getZoom();
+      const newBearing = mapInstance.getBearing();
+      const newPitch = mapInstance.getPitch();
+      updateMapState({ center: newCenter, zoom: newZoom, bearing: newBearing, pitch: newPitch });
+    };
+
+    mapInstance.on('moveend', updateStoredMapState);
+    mapInstance.on('zoomend', updateStoredMapState);
+    mapInstance.on('rotateend', updateStoredMapState);
+    mapInstance.on('pitchend', updateStoredMapState);
+
     if (enable3DMaps) {
       mapInstance.on('style.load', () => {
-        // Set light preset based on theme (day, dusk, dawn, or night)
         try {
           mapInstance.setConfigProperty('basemap', 'lightPreset', isDark ? 'night' : 'day');
-          
-          // Ensure 3D objects (buildings, landmarks, trees) are enabled
           mapInstance.setConfigProperty('basemap', 'show3dObjects', true);
-          
           console.log('3D map configured with light preset:', isDark ? 'night' : 'day');
         } catch (error) {
           console.error('Error setting map config:', error);
@@ -211,10 +222,10 @@ const NavigationPage = () => {
   };
 
   const handleDestinationSelect = async (coords) => {
-    setDestination(coords);
+    updateMapState({ destination: coords });
     setShowDirections(false);
 
-    const start = center; // Using current map center as start
+    const start = center;
     const end = coords;
     const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
     const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${accessToken}`;
@@ -223,11 +234,35 @@ const NavigationPage = () => {
       const response = await fetch(url);
       const data = await response.json();
       if (data.routes) {
-        setRoute(data.routes[0].geometry);
+        updateMapState({ route: data.routes[0].geometry });
+        setTripState('prompting');
       }
     } catch (err) {
       console.error('Failed to fetch directions:', err);
     }
+  };
+
+  const handleBeginDrive = () => {
+    setTripState('active');
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.easeTo({
+        center: center,
+        zoom: 16.5,
+        pitch: 60,
+        bearing: 0,
+        duration: 1000,
+      });
+    }
+  };
+
+  const handleCancelTrip = () => {
+    updateMapState({ route: null, destination: null });
+    setTripState('inactive');
+  };
+
+  const handleStopTrip = () => {
+    updateMapState({ route: null, destination: null });
+    setTripState('inactive');
   };
 
   useEffect(() => {
@@ -358,6 +393,14 @@ const NavigationPage = () => {
         onPlayPause={handlePlayPause}
         onPrevious={handlePrevious}
         onNext={handleNext}
+      />
+
+      {/* Trip Controls */}
+      <TripControls
+        tripState={tripState}
+        onBegin={handleBeginDrive}
+        onCancel={handleCancelTrip}
+        onStop={handleStopTrip}
       />
     </div>
   );
