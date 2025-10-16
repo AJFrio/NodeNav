@@ -102,7 +102,8 @@ class BluetoothAPI {
       }
       return await response.json();
     } catch (error) {
-      console.error(`Bluetooth API request failed for ${endpoint}:`, error);
+      // Use console.debug to avoid spamming the console in GUI-only mode
+      console.debug(`Bluetooth API request failed for ${endpoint}:`, error);
       throw error;
     }
   }

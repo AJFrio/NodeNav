@@ -12,10 +12,7 @@ const platform = process.platform;
 // Determine which implementation to use
 let bluetoothService;
 
-if (platform === 'win32') {
-  console.log('[Bluetooth Device] Loading Windows implementation');
-  bluetoothService = require('./bluetooth-device-windows');
-} else if (platform === 'linux') {
+if (platform === 'linux') {
   console.log('[Bluetooth Device] Loading Linux implementation (BlueZ/D-Bus)');
   bluetoothService = require('./bluetooth-device-linux');
 } else {
