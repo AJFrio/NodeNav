@@ -223,23 +223,28 @@ const NavigationPage = () => {
       const response = await fetch(url);
       const data = await response.json();
       if (data.routes) {
-        const route = data.routes[0].geometry;
-        setRoute(route);
-
-        const bounds = route.coordinates.reduce((bounds, coord) => {
-          return bounds.extend(coord);
-        }, new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0]));
-
-        mapInstanceRef.current.fitBounds(bounds, {
-          padding: 100,
-        });
-        setPitch(0);
-        setBearing(0);
+        setRoute(data.routes[0].geometry);
       }
     } catch (err) {
       console.error('Failed to fetch directions:', err);
     }
   };
+
+  useEffect(() => {
+    if (route && mapInstanceRef.current) {
+      const bounds = route.coordinates.reduce((bounds, coord) => {
+        return bounds.extend(coord);
+      }, new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0]));
+
+      mapInstanceRef.current.fitBounds(bounds, {
+        padding: 100,
+        pitch: 0,
+        bearing: 0,
+      });
+    }
+  }, [route]);
+
+
 
   // Show error if token is missing
   if (!hasToken) {

@@ -13,7 +13,7 @@ const Directions = ({ onDestinationSelect, onToggle }) => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!isExpanded || !query) return;
+    if (!query) return;
 
     setError(null);
     const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -47,7 +47,9 @@ const Directions = ({ onDestinationSelect, onToggle }) => {
       setIsExpanded(false);
     } else {
       setIsExpanded(true);
-      setTimeout(() => inputRef.current.focus(), 0);
+      if (!isExpanded) {
+        setTimeout(() => inputRef.current.focus(), 0);
+      }
     }
   };
 
@@ -73,10 +75,10 @@ const Directions = ({ onDestinationSelect, onToggle }) => {
               marginRight: 8,
             }}
           />
-          <button type="button" onClick={isExpanded ? (e) => handleSearch(e) : handleToggle} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <SearchIcon color={colors['text-primary']} />
-          </button>
         </form>
+        <button type="button" onClick={handleToggle} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <SearchIcon color={colors['text-primary']} />
+        </button>
       </div>
       {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
       {results.length > 0 && (

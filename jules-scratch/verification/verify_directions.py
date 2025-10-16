@@ -52,7 +52,7 @@ def run(playwright):
         expect(first_result).to_be_visible()
         first_result.click()
 
-        page.wait_for_timeout(2000) # Wait for the route to be drawn
+        page.wait_for_timeout(3000) # Wait for the route to be drawn
 
         page.screenshot(path="jules-scratch/verification/route.png")
 
