@@ -306,34 +306,14 @@ const NavigationPage = () => {
     <div
       style={{
         width: '100%',
-        height: '100%',
+        height: '100vh',
         backgroundColor: colors['bg-primary'],
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Search Button */}
-      <button
-        data-testid="search-button"
-        onClick={() => setShowDirections(!showDirections)}
-        style={{
-          position: 'absolute',
-          top: 20,
-          right: 20,
-          zIndex: 10,
-          background: colors['bg-secondary'],
-          border: 'none',
-          borderRadius: '50%',
-          padding: 12,
-          cursor: 'pointer',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
-        }}
-      >
-        <SearchIcon color={colors['text-primary']} size={24} />
-      </button>
-
       {/* Directions Search */}
-      {showDirections && <Directions onDestinationSelect={handleDestinationSelect} />}
+      <Directions onDestinationSelect={handleDestinationSelect} onToggle={() => setShowDirections(!showDirections)} />
 
       {/* Map Container */}
       <div

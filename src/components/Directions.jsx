@@ -3,12 +3,13 @@ import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
 import SearchIcon from './icons/SearchIcon';
 
-const Directions = ({ onDestinationSelect }) => {
+const Directions = ({ onDestinationSelect, onToggle }) => {
   const { theme } = useTheme();
   const colors = getColors(theme);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -38,30 +39,45 @@ const Directions = ({ onDestinationSelect }) => {
     setQuery('');
   };
 
+  const inputRef = React.useRef(null);
+
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+    if (!isExpanded) {
+      setTimeout(() => inputRef.current.focus(), 0);
+    }
+  };
+
   return (
-    <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 1, backgroundColor: colors['bg-secondary'], padding: 10, borderRadius: 8 }}>
-      <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center' }}>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for a destination"
-          style={{
-            backgroundColor: colors['bg-tertiary'],
-            color: colors['text-primary'],
-            border: `1px solid ${colors['bg-tertiary']}`,
-            borderRadius: 4,
-            padding: 8,
-            marginRight: 8
-          }}
-        />
-        <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-          <SearchIcon color={colors['text-primary']} />
-        </button>
-      </form>
+    <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        <form onSubmit={handleSearch}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search..."
+            style={{
+              width: isExpanded ? 200 : 0,
+              padding: isExpanded ? '8px' : '8px 0',
+              opacity: isExpanded ? 1 : 0,
+              border: `1px solid ${colors['bg-tertiary']}`,
+              borderRadius: 8,
+              backgroundColor: colors['bg-tertiary'],
+              color: colors['text-primary'],
+              transition: 'all 0.3s ease-in-out',
+              marginRight: 8,
+            }}
+          />
+          <button type="button" onClick={isExpanded ? handleSearch : handleToggle} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <SearchIcon color={colors['text-primary']} />
+          </button>
+        </form>
+      </div>
       {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
       {results.length > 0 && (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0, marginTop: 8 }}>
+        <ul style={{ listStyle: 'none', padding: 10, margin: 0, marginTop: 8, backgroundColor: colors['bg-secondary'], borderRadius: 8 }}>
           {results.map((result) => (
             <li
               key={result.id}
