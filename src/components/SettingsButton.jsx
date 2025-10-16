@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { styles, mergeStyles, getColors } from '../styles';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -8,101 +8,46 @@ const SettingsButton = ({
   description,
   onClick,
   disabled = false,
-  variant = 'primary', // primary, secondary, tertiary
   className = ""
 }) => {
   const { theme } = useTheme();
   const colors = getColors(theme);
-  
-  const getButtonStyle = () => {
-    if (disabled) {
-      return mergeStyles(
-        {
-          backgroundColor: colors['bg-secondary'],
-          border: `1px solid ${colors['bg-tertiary']}`,
-          borderRadius: '0.5rem',
-          padding: '1.5rem',
-        },
-        {
-          cursor: 'not-allowed',
-          opacity: 0.6,
-        }
-      );
-    }
+  const [isHovered, setIsHovered] = useState(false);
 
-    const baseStyle = {
-      backgroundColor: colors['bg-secondary'],
-      border: `1px solid ${colors['bg-tertiary']}`,
-      borderRadius: '0.5rem',
+  const buttonStyle = mergeStyles(
+    styles.card,
+    {
+      textAlign: 'left',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.5 : 1,
+      transition: 'all 150ms ease-in-out',
+      display: 'flex',
+      alignItems: 'center',
       padding: '1.5rem',
-      cursor: 'pointer',
-      transition: 'all 300ms ease-in-out',
-    };
-
-    switch (variant) {
-      case 'primary':
-        return mergeStyles(
-          baseStyle,
-          {
-            ':hover': {
-              borderColor: colors.info,
-              transform: 'scale(1.05)',
-            },
-          }
-        );
-      case 'secondary':
-        return mergeStyles(
-          baseStyle,
-          {
-            ':hover': {
-              borderColor: '#a855f7', // Purple-500
-              transform: 'scale(1.05)',
-            },
-          }
-        );
-      case 'tertiary':
-        return mergeStyles(
-          baseStyle,
-          {
-            ':hover': {
-              borderColor: colors.success,
-              transform: 'scale(1.05)',
-            },
-          }
-        );
-      default:
-        return baseStyle;
+      backgroundColor: isHovered ? colors['bg-tertiary'] : colors['bg-secondary'],
+      borderColor: isHovered ? colors['bg-quaternary'] : colors['bg-tertiary'],
     }
-  };
+  );
 
   return (
     <button
-      style={getButtonStyle()}
+      style={buttonStyle}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={className}
     >
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-        <Icon
-          size={80}
-          color={colors['text-primary']}
-          style={{
-            transition: 'transform 200ms ease-in-out',
-          }}
-        />
+      <div style={{ marginRight: '1.5rem' }}>
+        <Icon size={32} color={colors['text-primary']} />
       </div>
-      <div style={{
-        ...styles.typography.h3,
-        color: colors['text-primary'],
-        marginBottom: '0.5rem',
-      }}>
-        {title}
-      </div>
-      <div style={{
-        fontSize: '0.875rem',
-        color: disabled ? colors['text-disabled'] : colors['text-secondary'],
-      }}>
-        {description}
+      <div>
+        <div style={{ ...styles.typography.h3, color: colors['text-primary'], marginBottom: '0.25rem' }}>
+          {title}
+        </div>
+        <div style={{ ...styles.typography.body, color: colors['text-secondary'] }}>
+          {description}
+        </div>
       </div>
     </button>
   );

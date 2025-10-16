@@ -10,23 +10,20 @@ import SettingsButton from './components/SettingsButton';
 import NavigationItem from './components/NavigationItem';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { styles, getColors } from './styles';
-import {
-  Home,
-  Lightbulb,
-  Wrench,
-  Map,
-  Music,
-  BarChart3,
-  Settings,
-  Smartphone,
-  Monitor
-} from 'lucide-react';
+
+import HomeIcon from './components/icons/HomeIcon';
+import LightbulbIcon from './components/icons/LightbulbIcon';
+import MapIcon from './components/icons/MapIcon';
+import MusicIcon from './components/icons/MusicIcon';
+import SettingsIcon from './components/icons/SettingsIcon';
+import SmartphoneIcon from './components/icons/SmartphoneIcon';
+import MonitorIcon from './components/icons/MonitorIcon';
+import BarChart3Icon from './components/icons/BarChart3Icon';
 
 function AppContent() {
   const { theme } = useTheme();
   const colors = getColors(theme);
   
-  // Load default page from localStorage
   const [currentView, setCurrentView] = useState(() => {
     try {
       return localStorage.getItem('nodenav-default-page') || 'home';
@@ -37,11 +34,11 @@ function AppContent() {
   });
 
   const navigationItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'gpio', label: 'Lights', icon: Lightbulb },
-    { id: 'navigation', label: 'Navigation', icon: Map },
-    { id: 'media', label: 'Media', icon: Music },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'home', label: 'Home', icon: HomeIcon },
+    { id: 'gpio', label: 'Lights', icon: LightbulbIcon },
+    { id: 'navigation', label: 'Navigation', icon: MapIcon },
+    { id: 'media', label: 'Media', icon: MusicIcon },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
   const renderView = (viewId) => {
@@ -57,96 +54,47 @@ function AppContent() {
       right: 0,
       bottom: 0,
       zIndex: isActive ? 10 : 1,
-      transition: 'opacity 0.15s ease-in-out',
+      transition: 'opacity 0.2s ease-in-out',
+      padding: '2rem',
     };
 
     switch (viewId) {
       case 'gpio':
         return <div key="gpio" style={{...commonStyle, overflowY: 'auto'}}><GPIOControl /></div>;
       case 'navigation':
-        // Always keep navigation mounted for preloading
         return <div key="navigation" style={commonStyle}><NavigationPage /></div>;
       case 'media':
         return <div key="media" style={{...commonStyle, overflowY: 'auto'}}><MediaPlayer /></div>;
       case 'settings':
         return (
           <div key="settings" style={{...commonStyle, overflowY: 'auto'}}>
-            <div style={{
-              padding: '1.5rem',
-              maxWidth: '64rem', // 1024px
-              margin: '0 auto',
-            }}>
-              <h1 style={{
-                ...styles.typography.h1,
-                color: colors['text-primary'],
-                marginBottom: '2rem',
-              }}>Settings</h1>
-
+            <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
+              <h1 style={{ ...styles.typography.h1, color: colors['text-primary'] }}>
+                Settings
+              </h1>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                 gap: '1.5rem',
               }}>
                 <SettingsButton
-                  icon={Smartphone}
+                  icon={SmartphoneIcon}
                   title="Bluetooth"
-                  description="Pair and manage Bluetooth devices"
+                  description="Pair and manage devices"
                   onClick={() => setCurrentView('bluetooth')}
                 />
-
                 <SettingsButton
-                  icon={Monitor}
+                  icon={MonitorIcon}
                   title="Display"
-                  description="Theme and display preferences"
+                  description="Theme and appearance"
                   onClick={() => setCurrentView('display')}
-                  variant="secondary"
                 />
-
                 <SettingsButton
-                  icon={BarChart3}
+                  icon={BarChart3Icon}
                   title="Data"
                   description="View command history"
                   onClick={() => setCurrentView('data')}
-                  variant="tertiary"
                 />
-              </div>
-
-              <div style={{
-                marginTop: '2rem',
-                backgroundColor: colors['bg-secondary'],
-                border: `1px solid ${colors['bg-tertiary']}`,
-                borderRadius: '0.5rem',
-                padding: '1.5rem',
-                transition: 'background-color 150ms ease-in-out',
-              }}>
-                <h2 style={{
-                  ...styles.typography.h2,
-                  color: colors['text-primary'],
-                  marginBottom: '1rem',
-                }}>System Information</h2>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '1rem',
-                  fontSize: '0.875rem',
-                }}>
-                  <div>
-                    <span style={{ color: colors['text-secondary'] }}>GPIO Backend:</span>
-                    <span style={{ color: colors['text-primary'], marginLeft: '0.5rem' }}>Active (Logging Mode)</span>
-                  </div>
-                  <div>
-                    <span style={{ color: colors['text-secondary'] }}>Bluetooth Backend:</span>
-                    <span style={{ color: colors['text-primary'], marginLeft: '0.5rem' }}>Active (Simulation Mode)</span>
-                  </div>
-                  <div>
-                    <span style={{ color: colors['text-secondary'] }}>Version:</span>
-                    <span style={{ color: colors['text-tertiary'], marginLeft: '0.5rem' }}>1.0.0</span>
-                  </div>
-                  <div>
-                    <span style={{ color: colors['text-secondary'] }}>Last Updated:</span>
-                    <span style={{ color: colors['text-tertiary'], marginLeft: '0.5rem' }}>{new Date().toLocaleDateString()}</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -160,63 +108,34 @@ function AppContent() {
       case 'home':
       default:
         return (
-          <div key="home" style={{
-            ...commonStyle,
-            display: 'flex',
-            backgroundColor: colors['bg-primary'],
-            color: colors['text-primary'],
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem',
-          }}>
+          <div key="home" style={{ ...commonStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{
-              textAlign: 'center',
-              maxWidth: '50rem',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '2rem',
               width: '100%',
+              maxWidth: '900px',
             }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gridTemplateRows: 'repeat(2, 1fr)',
-                gap: '1.5rem',
-                maxWidth: '900px',
-                margin: '0 auto',
-              }}>
-                <HomeScreenCard
-                  icon={Lightbulb}
-                  title="Lights"
-                  description="Control lighting"
-                  onClick={() => setCurrentView('gpio')}
-                />
-
-                <HomeScreenCard
-                  icon={Map}
-                  title="Navigation"
-                  description="GPS and routing"
-                  onClick={() => setCurrentView('navigation')}
-                />
-
-                <HomeScreenCard
-                  icon={Music}
-                  title="Media"
-                  description="Music and radio"
-                  onClick={() => setCurrentView('media')}
-                />
-
-                <HomeScreenCard
-                  icon={BarChart3}
-                  title="Diagnostics"
-                  description="System monitoring"
-                />
-
-                <HomeScreenCard
-                  icon={Settings}
-                  title="Settings"
-                  description="Configuration"
-                  onClick={() => setCurrentView('settings')}
-                />
-              </div>
+              <HomeScreenCard
+                icon={LightbulbIcon}
+                title="Lights"
+                onClick={() => setCurrentView('gpio')}
+              />
+              <HomeScreenCard
+                icon={MapIcon}
+                title="Navigation"
+                onClick={() => setCurrentView('navigation')}
+              />
+              <HomeScreenCard
+                icon={MusicIcon}
+                title="Media"
+                onClick={() => setCurrentView('media')}
+              />
+              <HomeScreenCard
+                icon={SettingsIcon}
+                title="Settings"
+                onClick={() => setCurrentView('settings')}
+              />
             </div>
           </div>
         );
@@ -231,15 +150,7 @@ function AppContent() {
       overflow: 'hidden',
       transition: 'background-color 300ms ease-in-out, color 300ms ease-in-out',
     }}>
-
-      {/* Main Content */}
-      <main style={{
-        height: 'calc(100% - 5rem)', // Account for bottom navbar
-        overflowY: currentView === 'navigation' ? 'hidden' : 'auto',
-        overflowX: 'hidden',
-        position: 'relative',
-      }}>
-        {/* Render all views but only show the active one */}
+      <main style={{ height: 'calc(100% - 5rem)', position: 'relative' }}>
         {renderView('home')}
         {renderView('gpio')}
         {renderView('navigation')}
@@ -249,24 +160,18 @@ function AppContent() {
         {renderView('display')}
         {renderView('data')}
       </main>
-
-      {/* Bottom Navigation Bar */}
-      <nav style={{
-        ...styles.navigation.bottombar,
-        backgroundColor: colors['bg-secondary'],
-        borderTop: `1px solid ${colors['bg-tertiary']}`,
-        transition: 'background-color 300ms ease-in-out, border-color 300ms ease-in-out',
-      }}>
-        {navigationItems.map((item) => (
-          <NavigationItem
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            isActive={currentView === item.id}
-            onClick={() => setCurrentView(item.id)}
-            variant="bottombar"
-          />
-        ))}
+      <nav style={{...styles.navigation.bottombar, borderTop: `1px solid ${colors['bg-tertiary']}`}}>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          {navigationItems.map((item) => (
+            <NavigationItem
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              isActive={currentView === item.id}
+              onClick={() => setCurrentView(item.id)}
+            />
+          ))}
+        </div>
       </nav>
     </div>
   );

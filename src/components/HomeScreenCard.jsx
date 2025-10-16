@@ -1,29 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { styles, mergeStyles, getColors } from '../styles';
 import { useTheme } from '../contexts/ThemeContext';
 
 const HomeScreenCard = ({
   icon: Icon,
   title,
-  description,
   onClick,
   disabled = false,
   className = ""
 }) => {
   const { theme } = useTheme();
   const colors = getColors(theme);
-  
+  const [isHovered, setIsHovered] = useState(false);
+
   const cardStyle = mergeStyles(
+    styles.card,
     {
-      backgroundColor: colors['bg-secondary'],
-      border: `1px solid ${colors['bg-tertiary']}`,
-      borderRadius: '0.5rem',
-      padding: '1.5rem',
-      transition: 'all 300ms ease-in-out',
-    },
-    {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      aspectRatio: '1 / 1', // Maintain a square aspect ratio
       cursor: disabled ? 'not-allowed' : 'pointer',
-      opacity: disabled ? 0.6 : 1,
+      opacity: disabled ? 0.5 : 1,
+      transition: 'all 150ms ease-in-out',
+      backgroundColor: isHovered ? colors['bg-tertiary'] : colors['bg-secondary'],
+      borderColor: isHovered ? colors['bg-quaternary'] : colors['bg-tertiary'],
     }
   );
 
@@ -31,20 +34,16 @@ const HomeScreenCard = ({
     <div
       style={cardStyle}
       onClick={disabled ? undefined : onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={className}
     >
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+      <div style={{ marginBottom: '1rem' }}>
         <Icon size={48} color={colors['text-primary']} />
       </div>
-      <div style={{
-        ...styles.typography.h3,
-        color: colors['text-primary'],
-      }}>{title}</div>
-      <div style={{
-        ...styles.typography.caption,
-        color: colors['text-secondary'],
-        marginTop: '0.25rem'
-      }}>{description}</div>
+      <div style={{ ...styles.typography.h3, color: colors['text-primary'], fontSize: '1.25rem' }}>
+        {title}
+      </div>
     </div>
   );
 };
