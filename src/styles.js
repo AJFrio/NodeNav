@@ -6,9 +6,9 @@
 
 // Tesla-inspired dark theme
 const darkTheme = {
-  // Accent blue for interactive elements
-  primary: '#3E6AE1',
-  'primary-hover': '#3458B8',
+  // Accent white for interactive elements
+  primary: '#FFFFFF',
+  'primary-hover': '#E5E5E5',
 
   // Background hierarchy (dark grays)
   'bg-primary': '#1A1B1E',      // Main background
@@ -23,17 +23,17 @@ const darkTheme = {
   'text-disabled': '#5A5B5E',    // Disabled text
 
   // Status colors
-  success: '#3E6AE1', // Use primary blue for success
+  success: '#FFFFFF',
   danger: '#E13E3E',
   warning: '#E1A33E',
-  info: '#3E6AE1',
+  info: '#FFFFFF',
 };
 
 // Tesla-inspired light theme
 const lightTheme = {
   // Accent blue for interactive elements
-  primary: '#3E6AE1',
-  'primary-hover': '#3458B8',
+  primary: '#000000',
+  'primary-hover': '#1A1B1E',
 
   // Background hierarchy (light grays)
   'bg-primary': '#FFFFFF',      // Main background
@@ -48,10 +48,10 @@ const lightTheme = {
   'text-disabled': '#B3B3B3',    // Disabled text
 
   // Status colors
-  success: '#3E6AE1',
+  success: '#000000',
   danger: '#E13E3E',
   warning: '#E1A33E',
-  info: '#3E6AE1',
+  info: '#000000',
 };
 
 // Function to get colors based on theme

@@ -39,7 +39,7 @@ const SettingsButton = ({
       className={className}
     >
       <div style={{ marginRight: '1.5rem' }}>
-        <Icon size={32} color={colors.primary} />
+        <Icon size={32} color={colors['text-primary']} />
       </div>
       <div>
         <div style={{ ...styles.typography.h3, color: colors['text-primary'], marginBottom: '0.25rem' }}>
