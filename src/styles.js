@@ -4,78 +4,54 @@
  * Changes in this file will propagate throughout the application
  */
 
-// Dark theme colors (default)
+// Tesla-inspired dark theme
 const darkTheme = {
-  // Primary accent (minimal blue)
-  primary: '#ffffff',
-  'primary-hover': '#f0f0f0',
-  'primary-light': '#e0e0e0',
-  'primary-dark': '#d0d0d0',
+  // Accent blue for interactive elements
+  primary: '#3E6AE1',
+  'primary-hover': '#3458B8',
 
-  // Secondary accent (subtle gray)
-  secondary: '#333333',
-  'secondary-hover': '#444444',
+  // Background hierarchy (dark grays)
+  'bg-primary': '#1A1B1E',      // Main background
+  'bg-secondary': '#24252A',    // Cards, modals
+  'bg-tertiary': '#2E3035',     // Hover states, borders
+  'bg-quaternary': '#383A3F',   // Subtle highlights
 
-  // Status colors (minimal and monochromatic)
-  success: '#ffffff',
-  'success-hover': '#f0f0f0',
-  danger: '#ffffff',
-  'danger-hover': '#f0f0f0',
-  warning: '#ffffff',
-  'warning-hover': '#f0f0f0',
-  info: '#ffffff',
-  'info-hover': '#f0f0f0',
+  // Text hierarchy (light grays)
+  'text-primary': '#F2F2F2',     // Primary text
+  'text-secondary': '#B3B3B3',   // Secondary text
+  'text-tertiary': '#7F7F7F',    // Tertiary/placeholder text
+  'text-disabled': '#5A5B5E',    // Disabled text
 
-  // Dark gray background hierarchy
-  'bg-primary': '#282827',      // Darkest background
-  'bg-secondary': '#2f2f2e',    // Slightly lighter
-  'bg-tertiary': '#3a3a39',     // Medium dark
-  'bg-quaternary': '#454544',   // Medium gray
-  'bg-surface': '#505050',      // Lighter gray
-
-  // White text hierarchy
-  'text-primary': '#ffffff',     // Pure white
-  'text-secondary': '#f0f0f0',   // Off-white
-  'text-tertiary': '#e0e0e0',    // Light gray
-  'text-muted': '#cccccc',       // Medium gray
-  'text-disabled': '#999999',    // Darker gray
+  // Status colors
+  success: '#3E6AE1', // Use primary blue for success
+  danger: '#E13E3E',
+  warning: '#E1A33E',
+  info: '#3E6AE1',
 };
 
-// Light theme colors (inverted)
+// Tesla-inspired light theme
 const lightTheme = {
-  // Primary accent (minimal blue)
-  primary: '#000000',
-  'primary-hover': '#1a1a1a',
-  'primary-light': '#333333',
-  'primary-dark': '#0a0a0a',
+  // Accent blue for interactive elements
+  primary: '#3E6AE1',
+  'primary-hover': '#3458B8',
 
-  // Secondary accent (subtle gray)
-  secondary: '#cccccc',
-  'secondary-hover': '#bbbbbb',
+  // Background hierarchy (light grays)
+  'bg-primary': '#FFFFFF',      // Main background
+  'bg-secondary': '#F2F2F2',    // Cards, modals
+  'bg-tertiary': '#E5E5E5',     // Hover states, borders
+  'bg-quaternary': '#D9D9D9',   // Subtle highlights
 
-  // Status colors (minimal and monochromatic)
-  success: '#000000',
-  'success-hover': '#1a1a1a',
-  danger: '#000000',
-  'danger-hover': '#1a1a1a',
-  warning: '#000000',
-  'warning-hover': '#1a1a1a',
-  info: '#000000',
-  'info-hover': '#1a1a1a',
+  // Text hierarchy (dark grays)
+  'text-primary': '#1A1B1E',     // Primary text
+  'text-secondary': '#5A5B5E',   // Secondary text
+  'text-tertiary': '#9A9A9A',    // Tertiary/placeholder text
+  'text-disabled': '#B3B3B3',    // Disabled text
 
-  // Pure white background hierarchy (inverted)
-  'bg-primary': '#ffffff',      // Pure white background
-  'bg-secondary': '#f5f5f5',    // Almost white
-  'bg-tertiary': '#eeeeee',     // Light gray
-  'bg-quaternary': '#e5e5e5',   // Medium gray
-  'bg-surface': '#dddddd',      // Darker gray
-
-  // Black text hierarchy (inverted)
-  'text-primary': '#000000',     // Pure black
-  'text-secondary': '#0f0f0f',   // Off-black
-  'text-tertiary': '#1f1f1f',    // Dark gray
-  'text-muted': '#333333',       // Medium gray
-  'text-disabled': '#666666',    // Lighter gray
+  // Status colors
+  success: '#3E6AE1',
+  danger: '#E13E3E',
+  warning: '#E1A33E',
+  info: '#3E6AE1',
 };
 
 // Function to get colors based on theme
@@ -99,14 +75,15 @@ export const styles = {
   card: {
     backgroundColor: colors['bg-secondary'],
     border: `1px solid ${colors['bg-tertiary']}`,
-    borderRadius: '0.5rem',
+    borderRadius: '0.75rem', // Slightly larger radius
     padding: '1.5rem',
-    transition: 'all 300ms ease-in-out',
+    transition: 'all 150ms ease-in-out',
   },
 
   cardHover: {
     ':hover': {
       backgroundColor: colors['bg-tertiary'],
+      borderColor: colors['bg-quaternary'],
     },
   },
 
@@ -114,7 +91,7 @@ export const styles = {
   button: {
     primary: {
       backgroundColor: colors.primary,
-      color: colors['text-primary'],
+      color: '#FFFFFF', // White text on primary buttons
       border: 'none',
       borderRadius: '0.5rem',
       padding: '0.75rem 1.5rem',
@@ -125,7 +102,7 @@ export const styles = {
         backgroundColor: colors['primary-hover'],
       },
       ':disabled': {
-        backgroundColor: colors['bg-surface'],
+        backgroundColor: colors['bg-tertiary'],
         color: colors['text-disabled'],
         cursor: 'not-allowed',
       },
@@ -134,7 +111,7 @@ export const styles = {
     secondary: {
       backgroundColor: colors['bg-tertiary'],
       color: colors['text-primary'],
-      border: `1px solid ${colors['bg-quaternary']}`,
+      border: `1px solid ${colors['bg-tertiary']}`,
       borderRadius: '0.5rem',
       padding: '0.75rem 1.5rem',
       fontWeight: '500',
@@ -144,7 +121,7 @@ export const styles = {
         backgroundColor: colors['bg-quaternary'],
       },
       ':disabled': {
-        backgroundColor: colors['bg-surface'],
+        backgroundColor: colors['bg-tertiary'],
         color: colors['text-disabled'],
         cursor: 'not-allowed',
       },
@@ -156,9 +133,10 @@ export const styles = {
       border: 'none',
       padding: '0.5rem 0.75rem',
       cursor: 'pointer',
-      borderRadius: '0.25rem',
-      transition: 'color 150ms ease-in-out',
+      borderRadius: '0.5rem',
+      transition: 'all 150ms ease-in-out',
       ':hover': {
+        backgroundColor: colors['bg-secondary'],
         color: colors['text-primary'],
       },
     },
@@ -166,16 +144,17 @@ export const styles = {
 
   // Input styles
   input: {
-    backgroundColor: colors['bg-tertiary'],
+    backgroundColor: colors['bg-secondary'],
     color: colors['text-primary'],
-    border: `1px solid ${colors['bg-quaternary']}`,
-    borderRadius: '0.375rem',
-    padding: '0.75rem',
-    fontSize: '0.875rem',
-    transition: 'border-color 150ms ease-in-out',
+    border: `1px solid ${colors['bg-tertiary']}`,
+    borderRadius: '0.5rem',
+    padding: '0.75rem 1rem',
+    fontSize: '1rem',
+    transition: 'all 150ms ease-in-out',
     ':focus': {
       borderColor: colors.primary,
       outline: 'none',
+      boxShadow: `0 0 0 2px ${colors['bg-primary']}, 0 0 0 4px ${colors.primary}`,
     },
     '::placeholder': {
       color: colors['text-tertiary'],
@@ -186,7 +165,7 @@ export const styles = {
   gpioPin: {
     backgroundColor: colors['bg-secondary'],
     border: `1px solid ${colors['bg-tertiary']}`,
-    borderRadius: '0.5rem',
+    borderRadius: '0.75rem',
     padding: '1rem',
     transition: 'background-color 150ms ease-in-out',
     ':hover': {
@@ -197,14 +176,15 @@ export const styles = {
   gpioButton: {
     active: {
       backgroundColor: colors.danger,
+      color: '#FFFFFF',
       ':hover': {
-        backgroundColor: colors['danger-hover'],
+        backgroundColor: '#C83A3A', // Darker red on hover
       },
     },
     inactive: {
-      backgroundColor: colors['bg-quaternary'],
+      backgroundColor: colors['bg-tertiary'],
       ':hover': {
-        backgroundColor: colors['bg-tertiary'],
+        backgroundColor: colors['bg-quaternary'],
       },
     },
   },
@@ -213,7 +193,7 @@ export const styles = {
   bluetoothDevice: {
     backgroundColor: colors['bg-secondary'],
     border: `1px solid ${colors['bg-tertiary']}`,
-    borderRadius: '0.5rem',
+    borderRadius: '0.75rem',
     padding: '1rem',
     transition: 'background-color 150ms ease-in-out',
     ':hover': {
@@ -240,92 +220,88 @@ export const styles = {
     },
   },
 
-  // Navigation styles (horizontal bottom navbar)
+  // Navigation styles
   navigation: {
     bottombar: {
-      backgroundColor: colors['bg-secondary'],
+      backgroundColor: 'rgba(26, 27, 30, 0.8)', // Semi-transparent background
+      backdropFilter: 'blur(10px)',
       borderTop: `1px solid ${colors['bg-tertiary']}`,
-      height: '4rem',
+      height: '5rem', // Increased height
       width: '100vw',
       position: 'fixed',
       bottom: '0',
       left: '0',
       display: 'flex',
-      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-around',
-      padding: '0 1rem',
+      justifyContent: 'center', // Center the items
+      padding: '0 2rem',
       zIndex: 1000,
     },
 
     item: {
-      width: '3rem',
-      height: '3rem',
-      borderRadius: '0.5rem',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: '0.75rem',
-      fontWeight: '500',
       cursor: 'pointer',
       transition: 'all 150ms ease-in-out',
+      color: colors['text-secondary'],
+      padding: '0 1.5rem', // Add horizontal padding for spacing
+      height: '100%',
     },
 
     itemActive: {
-      backgroundColor: colors.primary,
-      color: colors['bg-primary'],
+      color: colors.primary,
     },
 
     itemInactive: {
-      backgroundColor: 'transparent',
       color: colors['text-secondary'],
       ':hover': {
         color: colors['text-primary'],
-        backgroundColor: colors['bg-tertiary'],
       },
     },
   },
 
-  // Typography styles (lighter weights)
+  // Typography styles
   typography: {
     h1: {
-      fontSize: '3rem',
-      fontWeight: '300',
+      fontSize: '2.5rem',
+      fontWeight: '500',
       color: colors['text-primary'],
       marginBottom: '2rem',
+      letterSpacing: '-0.02em',
     },
 
     h2: {
-      fontSize: '1.875rem',
-      fontWeight: '300',
+      fontSize: '1.75rem',
+      fontWeight: '500',
       color: colors['text-primary'],
-      marginBottom: '1rem',
+      marginBottom: '1.5rem',
     },
 
     h3: {
-      fontSize: '1.5rem',
-      fontWeight: '300',
+      fontSize: '1.25rem',
+      fontWeight: '500',
       color: colors['text-primary'],
-      marginBottom: '0.75rem',
+      marginBottom: '1rem',
     },
 
     body: {
       fontSize: '1rem',
       color: colors['text-primary'],
-      lineHeight: '1.5',
-      fontWeight: '300',
+      lineHeight: '1.6',
+      fontWeight: '400',
     },
 
     caption: {
       fontSize: '0.875rem',
       color: colors['text-secondary'],
-      fontWeight: '300',
+      fontWeight: '400',
     },
 
     label: {
       fontSize: '0.875rem',
-      fontWeight: '300',
+      fontWeight: '400',
       color: colors['text-secondary'],
       marginBottom: '0.5rem',
       display: 'block',
