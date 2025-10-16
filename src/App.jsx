@@ -5,7 +5,7 @@ import MediaPlayer from './pages/MediaPlayer';
 import DataPage from './pages/DataPage';
 import DisplaySettings from './pages/DisplaySettings';
 import NavigationPage from './pages/NavigationPage';
-import HomeScreenCard from './components/HomeScreenCard';
+import HomePage from './pages/HomePage';
 import SettingsButton from './components/SettingsButton';
 import NavigationItem from './components/NavigationItem';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -107,38 +107,8 @@ function AppContent() {
         return <div key="data" style={{...commonStyle, overflowY: 'auto'}}><DataPage /></div>;
       case 'home':
       default:
-        return (
-          <div key="home" style={{ ...commonStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '2rem',
-              width: '100%',
-              maxWidth: '900px',
-            }}>
-              <HomeScreenCard
-                icon={LightbulbIcon}
-                title="Lights"
-                onClick={() => setCurrentView('gpio')}
-              />
-              <HomeScreenCard
-                icon={MapIcon}
-                title="Navigation"
-                onClick={() => setCurrentView('navigation')}
-              />
-              <HomeScreenCard
-                icon={MusicIcon}
-                title="Media"
-                onClick={() => setCurrentView('media')}
-              />
-              <HomeScreenCard
-                icon={SettingsIcon}
-                title="Settings"
-                onClick={() => setCurrentView('settings')}
-              />
-            </div>
-          </div>
-        );
+        // The new HomePage has its own padding and layout
+        return <div key="home" style={{...commonStyle, padding: 0}}><HomePage /></div>;
     }
   };
 
