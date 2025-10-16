@@ -62,7 +62,7 @@ function AppContent() {
       case 'gpio':
         return <div key="gpio" style={{...commonStyle, overflowY: 'auto'}}><GPIOControl /></div>;
       case 'navigation':
-        return <div key="navigation" style={commonStyle}><NavigationPage /></div>;
+        return <div key="navigation" style={{...commonStyle, padding: 0}}><NavigationPage /></div>;
       case 'media':
         return <div key="media" style={{...commonStyle, overflowY: 'auto'}}><MediaPlayer /></div>;
       case 'settings':

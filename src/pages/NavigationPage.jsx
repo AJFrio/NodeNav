@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
 import MapBox from '../components/MapBox';
 import MusicControlWidget from '../components/MusicControlWidget';
+import Directions from '../components/Directions';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
 import { bluetoothAPI } from '../services/api';
+import SearchIcon from '../components/icons/SearchIcon';
 
 const NavigationPage = () => {
   const { theme, isDark } = useTheme();
   const colors = getColors(theme);
   const mapInstanceRef = useRef(null);
+  const [destination, setDestination] = useState(null);
+  const [route, setRoute] = useState(null);
+  const [showDirections, setShowDirections] = useState(false);
 
   // Music state from localStorage
   const [musicState, setMusicState] = useState({
@@ -204,6 +210,42 @@ const NavigationPage = () => {
     }
   };
 
+  const handleDestinationSelect = async (coords) => {
+    setDestination(coords);
+    setShowDirections(false);
+
+    const start = center; // Using current map center as start
+    const end = coords;
+    const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${accessToken}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.routes) {
+        setRoute(data.routes[0].geometry);
+      }
+    } catch (err) {
+      console.error('Failed to fetch directions:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (route && mapInstanceRef.current) {
+      const bounds = route.coordinates.reduce((bounds, coord) => {
+        return bounds.extend(coord);
+      }, new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0]));
+
+      mapInstanceRef.current.fitBounds(bounds, {
+        padding: 100,
+        pitch: 0,
+        bearing: 0,
+      });
+    }
+  }, [route]);
+
+
+
   // Show error if token is missing
   if (!hasToken) {
     return (
@@ -281,12 +323,15 @@ const NavigationPage = () => {
     <div
       style={{
         width: '100%',
-        height: '100%',
+        height: '100vh',
         backgroundColor: colors['bg-primary'],
         position: 'relative',
         overflow: 'hidden',
       }}
     >
+      {/* Directions Search */}
+      <Directions onDestinationSelect={handleDestinationSelect} onToggle={() => setShowDirections(!showDirections)} />
+
       {/* Map Container */}
       <div
         style={{
@@ -301,6 +346,7 @@ const NavigationPage = () => {
           pitch={pitch}
           style={getMapStyle()}
           onMapLoad={handleMapLoad}
+          route={route}
         />
       </div>
 
