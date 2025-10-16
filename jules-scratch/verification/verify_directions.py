@@ -5,8 +5,6 @@ def run(playwright):
     context = browser.new_context()
     page = context.new_page()
 
-    page.on("console", lambda msg: print(msg.text))
-
     try:
         page.goto("http://localhost:5173/")
 
@@ -18,11 +16,21 @@ def run(playwright):
         # Click the search button to expand the input
         search_button = page.locator('button:has(svg)').first
         expect(search_button).to_be_visible()
-        search_button.dispatch_event('click')
+        search_button.click()
 
         page.wait_for_timeout(500) # wait for animation
 
-        page.screenshot(path="jules-scratch/verification/before_search.png")
+        page.screenshot(path="jules-scratch/verification/search_expanded.png")
+
+        # Click the search button to retract the input
+        search_button.click()
+
+        page.wait_for_timeout(500) # wait for animation
+
+        page.screenshot(path="jules-scratch/verification/search_retracted.png")
+
+        # Click the search button to expand the input
+        search_button.click()
 
         # Fill in the destination
         destination_input = page.get_by_placeholder("Search...")

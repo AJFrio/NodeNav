@@ -102,9 +102,10 @@ const MapBox = ({
           'line-cap': 'round',
         },
         paint: {
-          'line-color': '#3887be',
-          'line-width': 5,
-          'line-opacity': 0.75,
+          'line-color': '#0099ff',
+          'line-width': 8,
+          'line-opacity': 1,
+          'line-emissive-strength': 1,
         },
       });
     }

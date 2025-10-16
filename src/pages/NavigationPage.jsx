@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
 import MapBox from '../components/MapBox';
 import MusicControlWidget from '../components/MusicControlWidget';
 import Directions from '../components/Directions';
@@ -222,7 +223,18 @@ const NavigationPage = () => {
       const response = await fetch(url);
       const data = await response.json();
       if (data.routes) {
-        setRoute(data.routes[0].geometry);
+        const route = data.routes[0].geometry;
+        setRoute(route);
+
+        const bounds = route.coordinates.reduce((bounds, coord) => {
+          return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0]));
+
+        mapInstanceRef.current.fitBounds(bounds, {
+          padding: 100,
+        });
+        setPitch(0);
+        setBearing(0);
       }
     } catch (err) {
       console.error('Failed to fetch directions:', err);

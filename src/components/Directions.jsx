@@ -13,7 +13,7 @@ const Directions = ({ onDestinationSelect, onToggle }) => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!query) return;
+    if (!isExpanded || !query) return;
 
     setError(null);
     const accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -22,6 +22,7 @@ const Directions = ({ onDestinationSelect, onToggle }) => {
     try {
       const response = await fetch(url);
       const data = await response.json();
+      console.log(data);
       if (data.features) {
         setResults(data.features);
       } else {
@@ -42,8 +43,10 @@ const Directions = ({ onDestinationSelect, onToggle }) => {
   const inputRef = React.useRef(null);
 
   const handleToggle = () => {
-    setIsExpanded(!isExpanded);
-    if (!isExpanded) {
+    if (isExpanded && query === '') {
+      setIsExpanded(false);
+    } else {
+      setIsExpanded(true);
       setTimeout(() => inputRef.current.focus(), 0);
     }
   };
@@ -70,7 +73,7 @@ const Directions = ({ onDestinationSelect, onToggle }) => {
               marginRight: 8,
             }}
           />
-          <button type="button" onClick={isExpanded ? handleSearch : handleToggle} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <button type="button" onClick={isExpanded ? (e) => handleSearch(e) : handleToggle} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
             <SearchIcon color={colors['text-primary']} />
           </button>
         </form>
