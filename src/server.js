@@ -17,9 +17,9 @@ app.use(express.json());
 // Initialize services
 if (os.platform() === 'linux') {
   console.log('Linux platform detected. Initializing hardware services.');
-  gpioService.initialize().catch(err => console.error('GPIO init failed:', err.message));
-  bluetoothService.initialize().catch(err => console.error('Bluetooth init failed:', err.message));
-  lightsService.initialize(server).catch(err => console.error('Lights init failed:', err.message));
+  gpioService.initialize().catch(err => console.error('GPIO init failed:', err));
+  bluetoothService.initialize().catch(err => console.error('Bluetooth init failed:', err));
+  lightsService.initialize(server).catch(err => console.error('Lights init failed:', err));
 } else {
   console.log('Non-Linux platform. Hardware services disabled.');
 }

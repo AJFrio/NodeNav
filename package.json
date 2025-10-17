@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "electron": "electron .",
     "dev": "vite",
-    "electron-dev": "cross-env NODE_ENV=development concurrently \"npm run dev\" \"wait-on http://localhost:5173 && npm run electron\"",
+    "electron-dev": "cross-env NODE_ENV=development concurrently \"npm run dev\" \"node src/server.js\" \"wait-on http://localhost:5173 && npm run electron\"",
     "start": "npm run build && npm run electron"
   },
   "author": "AJ Frio",
