@@ -4,6 +4,7 @@ import MediaControlPanel from '../components/MediaControlPanel';
 import LightControlPanel from '../components/LightControlPanel';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
+import { useMapSync } from '../hooks/useMapSync';
 
 const HomePage = () => {
   const { theme, isDark } = useTheme();
@@ -19,11 +20,8 @@ const HomePage = () => {
     }
   });
 
-  // Identical map starting state to NavigationPage
-  const [center, setCenter] = useState([-105.2705, 40.0150]); // Boulder, CO
-  const [zoom, setZoom] = useState(16.5);
-  const [bearing, setBearing] = useState(0);
-  const [pitch, setPitch] = useState(60);
+  // Use the synchronized map state
+  const { center, zoom, bearing, pitch, route } = useMapSync();
 
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -119,6 +117,7 @@ const HomePage = () => {
           pitch={pitch}
           style={getMapStyle()}
           onMapLoad={handleMapLoad}
+          route={route}
         />
       </div>
 
