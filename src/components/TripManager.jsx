@@ -5,18 +5,36 @@ import { getColors } from '../styles';
 const TripManager = ({ onBegin, onCancel, onStop, tripActive }) => {
   const { theme } = useTheme();
   const colors = getColors(theme);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
-  // Trigger fade-in animation when tripActive becomes true
-  useEffect(() => {
-    if (tripActive) {
-      setIsVisible(true);
-    } else {
-      // Allow fade-out animation before unmounting
-      const timer = setTimeout(() => setIsVisible(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [tripActive]);
+  // When the component unmounts, we want to fade it out
+  const handleCancel = () => {
+    setIsVisible(false);
+    // Give time for animation before calling parent cancel
+    setTimeout(onCancel, 400);
+  };
+
+  const handleStop = () => {
+    setIsVisible(false);
+    // Give time for animation before calling parent stop
+    setTimeout(onStop, 400);
+  };
+
+  const containerStyle = {
+    position: 'absolute',
+    bottom: '6rem',
+    left: '2rem',
+    backgroundColor: colors['bg-secondary'],
+    padding: '1rem',
+    borderRadius: '1rem',
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'center',
+    transform: isVisible ? 'translateY(0)' : 'translateY(150%)',
+    opacity: isVisible ? 1 : 0,
+    transition: 'transform 0.4s ease-out, opacity 0.4s ease-out',
+    zIndex: 1000,
+  };
 
   const buttonBaseStyle = {
     padding: '0.75rem 1.5rem',
@@ -48,37 +66,19 @@ const TripManager = ({ onBegin, onCancel, onStop, tripActive }) => {
     width: '100%', // Take full width
   };
 
-  if (!isVisible) return null;
-
   return (
-    <div
-      style={{
-        position: 'absolute',
-        bottom: '2rem',
-        left: '2rem',
-        backgroundColor: colors['bg-secondary'],
-        padding: '1rem',
-        borderRadius: '1rem',
-        display: 'flex',
-        gap: '1rem',
-        alignItems: 'center',
-        transform: tripActive ? 'translateY(0)' : 'translateY(150%)',
-        opacity: tripActive ? 1 : 0,
-        transition: 'transform 0.4s ease-out, opacity 0.4s ease-out',
-        zIndex: 1000,
-      }}
-    >
+    <div data-testid="trip-manager" style={containerStyle}>
       {!tripActive ? (
         <>
           <button style={beginButtonStyle} onClick={onBegin}>
             Begin Drive
           </button>
-          <button style={cancelButtonStyle} onClick={onCancel}>
+          <button style={cancelButtonStyle} onClick={handleCancel}>
             Cancel
           </button>
         </>
       ) : (
-        <button style={stopButtonStyle} onClick={onStop}>
+        <button style={stopButtonStyle} onClick={handleStop}>
           Stop Trip
         </button>
       )}

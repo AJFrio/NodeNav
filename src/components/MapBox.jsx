@@ -70,44 +70,53 @@ const MapBox = ({
     });
   }, [center, zoom, bearing, pitch, mapLoaded]);
 
-  // Draw route on map
+  // Draw or clear route on map
   useEffect(() => {
-    if (!map.current || !mapLoaded || !route) return;
+    if (!map.current || !mapLoaded) return;
 
     const routeId = 'route';
     const source = map.current.getSource(routeId);
 
-    if (source) {
-      source.setData({
-        type: 'Feature',
-        properties: {},
-        geometry: route,
-      });
-    } else {
-      map.current.addSource(routeId, {
-        type: 'geojson',
-        data: {
+    // If a route is provided, draw it
+    if (route) {
+      if (source) {
+        // If source exists, just update the data
+        source.setData({
           type: 'Feature',
           properties: {},
           geometry: route,
-        },
-      });
+        });
+      } else {
+        // Otherwise, add a new source and layer
+        map.current.addSource(routeId, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: route,
+          },
+        });
 
-      map.current.addLayer({
-        id: routeId,
-        type: 'line',
-        source: routeId,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': '#0099ff',
-          'line-width': 8,
-          'line-opacity': 1,
-          'line-emissive-strength': 1,
-        },
-      });
+        map.current.addLayer({
+          id: routeId,
+          type: 'line',
+          source: routeId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#0099ff', // A vibrant blue
+            'line-width': 8,
+            'line-opacity': 0.9,
+            'line-emissive-strength': 0.8,
+          },
+        });
+      }
+    } else if (source) {
+      // If no route is provided and the source exists, clear it
+      map.current.removeLayer(routeId);
+      map.current.removeSource(routeId);
     }
   }, [route, mapLoaded]);
 

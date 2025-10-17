@@ -391,7 +391,7 @@ const NavigationPage = () => {
       />
 
       {/* Trip Manager */}
-      {destination && (
+      {route && (
         <TripManager
           tripActive={tripActive}
           onBegin={handleBeginTrip}
