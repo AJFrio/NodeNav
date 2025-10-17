@@ -64,7 +64,7 @@ function AppContent() {
       case 'navigation':
         return <div key="navigation" style={{...commonStyle, padding: 0}}><NavigationPage /></div>;
       case 'media':
-        return <div key="media" style={{...commonStyle, overflowY: 'auto'}}><MediaPlayer /></div>;
+        return <div key="media" style={{...commonStyle, padding: 0, overflowY: 'auto'}}><MediaPlayer /></div>;
       case 'settings':
         return (
           <div key="settings" style={{...commonStyle, overflowY: 'auto'}}>
