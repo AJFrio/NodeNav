@@ -3,9 +3,11 @@ import mapboxgl from 'mapbox-gl';
 import MapBox from '../components/MapBox';
 import MusicControlWidget from '../components/MusicControlWidget';
 import Directions from '../components/Directions';
+import TripManager from '../components/TripManager';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
 import { bluetoothAPI } from '../services/api';
+import { useMapSync } from '../hooks/useMapSync';
 import SearchIcon from '../components/icons/SearchIcon';
 
 const NavigationPage = () => {
@@ -13,8 +15,8 @@ const NavigationPage = () => {
   const colors = getColors(theme);
   const mapInstanceRef = useRef(null);
   const [destination, setDestination] = useState(null);
-  const [route, setRoute] = useState(null);
   const [showDirections, setShowDirections] = useState(false);
+  const [tripActive, setTripActive] = useState(false);
 
   // Music state from localStorage
   const [musicState, setMusicState] = useState({
@@ -33,11 +35,8 @@ const NavigationPage = () => {
     }
   });
 
-  // Map state - Navigation view optimized for driving
-  const [center, setCenter] = useState([-105.2705, 40.0150]); // Boulder, CO
-  const [zoom, setZoom] = useState(16.5); // Zoomed in for navigation
-  const [bearing, setBearing] = useState(0); // Rotation (can be set to compass heading)
-  const [pitch, setPitch] = useState(60); // 60 degrees tilt for 3rd person car view
+  // Use the synchronized map state
+  const { center, zoom, bearing, pitch, route, updateMapState, clearRoute } = useMapSync();
 
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -213,6 +212,7 @@ const NavigationPage = () => {
   const handleDestinationSelect = async (coords) => {
     setDestination(coords);
     setShowDirections(false);
+    setTripActive(false); // Reset trip state
 
     const start = center; // Using current map center as start
     const end = coords;
@@ -223,15 +223,16 @@ const NavigationPage = () => {
       const response = await fetch(url);
       const data = await response.json();
       if (data.routes) {
-        setRoute(data.routes[0].geometry);
+        updateMapState({ route: data.routes[0].geometry });
       }
     } catch (err) {
       console.error('Failed to fetch directions:', err);
     }
   };
 
+  // Fit map to route bounds when a new route is set
   useEffect(() => {
-    if (route && mapInstanceRef.current) {
+    if (route && mapInstanceRef.current && !tripActive) {
       const bounds = route.coordinates.reduce((bounds, coord) => {
         return bounds.extend(coord);
       }, new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0]));
@@ -242,7 +243,36 @@ const NavigationPage = () => {
         bearing: 0,
       });
     }
-  }, [route]);
+  }, [route, tripActive]);
+
+  // Handler for "Begin Drive"
+  const handleBeginTrip = () => {
+    setTripActive(true);
+    // Reorient the map to the driver's perspective
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.easeTo({
+        center,
+        zoom: 16.5,
+        pitch: 60,
+        bearing: 0,
+        duration: 1500,
+      });
+    }
+  };
+
+  // Handler for "Cancel"
+  const handleCancelTrip = () => {
+    setDestination(null);
+    clearRoute();
+    setTripActive(false);
+  };
+
+  // Handler for "Stop Trip"
+  const handleStopTrip = () => {
+    setDestination(null);
+    clearRoute();
+    setTripActive(false);
+  };
 
 
 
@@ -359,6 +389,16 @@ const NavigationPage = () => {
         onPrevious={handlePrevious}
         onNext={handleNext}
       />
+
+      {/* Trip Manager */}
+      {route && (
+        <TripManager
+          tripActive={tripActive}
+          onBegin={handleBeginTrip}
+          onCancel={handleCancelTrip}
+          onStop={handleStopTrip}
+        />
+      )}
     </div>
   );
 };
