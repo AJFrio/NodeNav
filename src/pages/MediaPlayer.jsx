@@ -260,12 +260,12 @@ const MediaPlayer = () => {
 
   return (
     <div style={{
-      height: 'calc(100vh - 5rem)',
+      height: '100%',
       backgroundColor: colors['bg-primary'],
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'space-between',
-      padding: '1rem 2rem 1.5rem 2rem',
+      justifyContent: 'space-around',
+      padding: '1rem 2rem',
       overflow: 'hidden',
     }}>
       {/* Header */}
@@ -311,13 +311,13 @@ const MediaPlayer = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: '1rem',
+        marginBottom: '0.75rem',
       }}>
         <div style={{
-          width: 'min(280px, 60vw)',
-          height: 'min(280px, 60vw)',
-          maxWidth: '280px',
-          maxHeight: '280px',
+          width: 'min(220px, 45vw)',
+          height: 'min(220px, 45vw)',
+          maxWidth: '220px',
+          maxHeight: '220px',
           backgroundColor: colors['bg-secondary'],
           border: `2px solid ${colors['bg-tertiary']}`,
           borderRadius: '1rem',
@@ -417,7 +417,7 @@ const MediaPlayer = () => {
       {/* Track Info */}
       <div style={{
         textAlign: 'center',
-        marginBottom: '1.25rem',
+        marginBottom: '0.75rem',
         flexShrink: 0,
       }}>
         <h2 style={{
@@ -440,7 +440,7 @@ const MediaPlayer = () => {
 
       {/* Progress Bar */}
       <div style={{ 
-        marginBottom: '1.25rem',
+        marginBottom: '0.75rem',
         flexShrink: 0,
       }}>
         <div
@@ -482,7 +482,7 @@ const MediaPlayer = () => {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '1.5rem',
-        marginBottom: '0.5rem',
+        marginBottom: '0',
         flexShrink: 0,
       }}>
         {/* Previous Button */}
