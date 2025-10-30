@@ -3,12 +3,14 @@ import { styles, mergeStyles, getColors } from '../styles';
 import { useTheme } from '../contexts/ThemeContext';
 
 const SettingsButton = ({
+  as: Component = 'button',
   icon: Icon,
   title,
   description,
   onClick,
   disabled = false,
-  className = ""
+  className = "",
+  ...rest
 }) => {
   const { theme } = useTheme();
   const colors = getColors(theme);
@@ -26,18 +28,32 @@ const SettingsButton = ({
       padding: '1.5rem',
       backgroundColor: isHovered ? colors['bg-tertiary'] : colors['bg-secondary'],
       borderColor: isHovered ? colors['bg-quaternary'] : colors['bg-tertiary'],
+      textDecoration: 'none',
     }
   );
 
+  const componentProps = {
+    style:buttonStyle,
+    onClick: disabled ? undefined : onClick,
+    onMouseEnter: () => setIsHovered(true),
+    onMouseLeave: () => setIsHovered(false),
+    className,
+    ...rest,
+  };
+
+  if (Component === 'button') {
+    componentProps.disabled = disabled;
+  } else if (disabled) {
+    componentProps.onClick = (e) => {
+        e.preventDefault();
+        // still call onClick if it exists
+        if(onClick) onClick(e);
+    };
+    componentProps['aria-disabled'] = true;
+  }
+
   return (
-    <button
-      style={buttonStyle}
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={className}
-    >
+    <Component {...componentProps}>
       <div style={{ marginRight: '1.5rem' }}>
         <Icon size={32} color={colors['text-primary']} />
       </div>
@@ -49,7 +65,7 @@ const SettingsButton = ({
           {description}
         </div>
       </div>
-    </button>
+    </Component>
   );
 };
 

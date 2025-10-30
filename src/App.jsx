@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import GPIOControl from './pages/GPIOControl';
 import BluetoothSettings from './pages/BluetoothSettings';
 import MediaPlayer from './pages/MediaPlayer';
@@ -7,7 +8,8 @@ import DisplaySettings from './pages/DisplaySettings';
 import NavigationPage from './pages/NavigationPage';
 import HomePage from './pages/HomePage';
 import SettingsButton from './components/SettingsButton';
-import NavigationItem from './components/NavigationItem';
+import View from './components/View';
+import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { styles, getColors } from './styles';
 
@@ -20,97 +22,76 @@ import SmartphoneIcon from './components/icons/SmartphoneIcon';
 import MonitorIcon from './components/icons/MonitorIcon';
 import BarChart3Icon from './components/icons/BarChart3Icon';
 
-function AppContent() {
+const navigationItems = [
+  { path: '/', label: 'Home', icon: HomeIcon },
+  { path: '/gpio', label: 'Lights', icon: LightbulbIcon },
+  { path: '/navigation', label: 'Navigation', icon: MapIcon },
+  { path: '/media', label: 'Media', icon: MusicIcon },
+  { path: '/settings', label: 'Settings', icon: SettingsIcon },
+];
+
+function NavigationItem({ icon: Icon, label, ...rest }) {
   const { theme } = useTheme();
   const colors = getColors(theme);
-  
-  const [currentView, setCurrentView] = useState(() => {
-    try {
-      return localStorage.getItem('nodenav-default-page') || 'home';
-    } catch (error) {
-      console.error('Failed to load default page:', error);
-      return 'home';
-    }
-  });
 
-  const navigationItems = [
-    { id: 'home', label: 'Home', icon: HomeIcon },
-    { id: 'gpio', label: 'Lights', icon: LightbulbIcon },
-    { id: 'navigation', label: 'Navigation', icon: MapIcon },
-    { id: 'media', label: 'Media', icon: MusicIcon },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon },
-  ];
+  return (
+    <NavLink
+      {...rest}
+      style={({ isActive }) => ({
+        ...styles.navigation.item,
+        color: isActive ? colors['accent-primary'] : colors['text-secondary'],
+        flexDirection: 'column',
+      })}
+    >
+      <Icon size={24} />
+      <span>{label}</span>
+    </NavLink>
+  );
+}
 
-  const renderView = (viewId) => {
-    const isActive = currentView === viewId;
-    const commonStyle = {
-      opacity: isActive ? 1 : 0,
-      pointerEvents: isActive ? 'auto' : 'none',
-      height: '100%',
-      width: '100%',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: isActive ? 10 : 1,
-      transition: 'opacity 0.2s ease-in-out',
-      padding: '2rem',
-    };
+function SettingsPage() {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
 
-    switch (viewId) {
-      case 'gpio':
-        return <div key="gpio" style={{...commonStyle, overflowY: 'auto'}}><GPIOControl /></div>;
-      case 'navigation':
-        return <div key="navigation" style={{...commonStyle, padding: 0}}><NavigationPage /></div>;
-      case 'media':
-        return <div key="media" style={{...commonStyle, padding: 0, overflowY: 'auto'}}><MediaPlayer /></div>;
-      case 'settings':
-        return (
-          <div key="settings" style={{...commonStyle, overflowY: 'auto'}}>
-            <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
-              <h1 style={{ ...styles.typography.h1, color: colors['text-primary'] }}>
-                Settings
-              </h1>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '1.5rem',
-              }}>
-                <SettingsButton
-                  icon={SmartphoneIcon}
-                  title="Bluetooth"
-                  description="Pair and manage devices"
-                  onClick={() => setCurrentView('bluetooth')}
-                />
-                <SettingsButton
-                  icon={MonitorIcon}
-                  title="Display"
-                  description="Theme and appearance"
-                  onClick={() => setCurrentView('display')}
-                />
-                <SettingsButton
-                  icon={BarChart3Icon}
-                  title="Data"
-                  description="View command history"
-                  onClick={() => setCurrentView('data')}
-                />
-              </div>
-            </div>
-          </div>
-        );
-      case 'bluetooth':
-        return <div key="bluetooth" style={{...commonStyle, overflowY: 'auto'}}><BluetoothSettings /></div>;
-      case 'display':
-        return <div key="display" style={{...commonStyle, overflowY: 'auto'}}><DisplaySettings /></div>;
-      case 'data':
-        return <div key="data" style={{...commonStyle, overflowY: 'auto'}}><DataPage /></div>;
-      case 'home':
-      default:
-        // The new HomePage has its own padding and layout
-        return <div key="home" style={{...commonStyle, padding: 0}}><HomePage /></div>;
-    }
-  };
+  return (
+    <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
+      <h1 style={{ ...styles.typography.h1, color: colors['text-primary'] }}>
+        Settings
+      </h1>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '1.5rem',
+      }}>
+        <SettingsButton
+          icon={SmartphoneIcon}
+          title="Bluetooth"
+          description="Pair and manage devices"
+          as={NavLink}
+          to="/settings/bluetooth"
+        />
+        <SettingsButton
+          icon={MonitorIcon}
+          title="Display"
+          description="Theme and appearance"
+          as={NavLink}
+          to="/settings/display"
+        />
+        <SettingsButton
+          icon={BarChart3Icon}
+          title="Data"
+          description="View command history"
+          as={NavLink}
+          to="/settings/data"
+        />
+      </div>
+    </div>
+  );
+}
+
+function Layout({ children }) {
+  const { theme } = useTheme();
+  const colors = getColors(theme);
 
   return (
     <div style={{
@@ -121,24 +102,16 @@ function AppContent() {
       transition: 'background-color 300ms ease-in-out, color 300ms ease-in-out',
     }}>
       <main style={{ height: 'calc(100% - 5rem)', position: 'relative' }}>
-        {renderView('home')}
-        {renderView('gpio')}
-        {renderView('navigation')}
-        {renderView('media')}
-        {renderView('settings')}
-        {renderView('bluetooth')}
-        {renderView('display')}
-        {renderView('data')}
+        {children}
       </main>
       <nav style={{...styles.navigation.bottombar, borderTop: `1px solid ${colors['bg-tertiary']}`}}>
         <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           {navigationItems.map((item) => (
             <NavigationItem
-              key={item.id}
+              key={item.path}
+              to={item.path}
               icon={item.icon}
               label={item.label}
-              isActive={currentView === item.id}
-              onClick={() => setCurrentView(item.id)}
             />
           ))}
         </div>
@@ -147,11 +120,32 @@ function AppContent() {
   );
 }
 
+function AppContent() {
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<View><HomePage /></View>} />
+          <Route path="/gpio" element={<View><GPIOControl /></View>} />
+          <Route path="/navigation" element={<View><NavigationPage /></View>} />
+          <Route path="/media" element={<View><MediaPlayer /></View>} />
+          <Route path="/settings" element={<View><SettingsPage /></View>} />
+          <Route path="/settings/bluetooth" element={<View><BluetoothSettings /></View>} />
+          <Route path="/settings/display" element={<View><DisplaySettings /></View>} />
+          <Route path="/settings/data" element={<View><DataPage /></View>} />
+        </Routes>
+      </Layout>
+    </Router>
+  );
+}
+
 function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

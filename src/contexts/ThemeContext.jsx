@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
+import useThemeStore from '../store/useThemeStore';
 
 const ThemeContext = createContext();
 
@@ -11,28 +12,10 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Initialize theme from localStorage, default to 'dark'
-  const [theme, setTheme] = useState(() => {
-    try {
-      const savedTheme = localStorage.getItem('nodenav-theme');
-      return savedTheme || 'dark';
-    } catch (error) {
-      console.error('Failed to load theme from localStorage:', error);
-      return 'dark';
-    }
-  });
-
-  // Save theme to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('nodenav-theme', theme);
-    } catch (error) {
-      console.error('Failed to save theme to localStorage:', error);
-    }
-  }, [theme]);
+  const { theme, setTheme } = useThemeStore();
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const value = {
@@ -50,4 +33,3 @@ export const ThemeProvider = ({ children }) => {
 };
 
 export default ThemeContext;
-

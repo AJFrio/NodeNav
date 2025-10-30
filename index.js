@@ -1,6 +1,5 @@
 const { app, BrowserWindow } = require('electron')
 const path = require('path')
-const { startServer } = require('./src/server')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -45,18 +44,8 @@ function createWindow() {
 }
 
 // This method will be called when Electron has finished initialization
-app.whenReady().then(async () => {
-  try {
-    // Start the backend server
-    await startServer();
-    console.log('Backend server started successfully');
-
-    // Create the main window
-    createWindow();
-  } catch (error) {
-    console.error('Failed to start backend server:', error);
-    app.quit();
-  }
+app.whenReady().then(() => {
+  createWindow();
 })
 
 // Quit when all windows are closed, except on macOS
