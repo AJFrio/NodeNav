@@ -93,9 +93,7 @@ const HomePage = () => {
 
   return (
     <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gridTemplateRows: '1fr',
+      display: 'flex',
       gap: '2rem',
       height: '100%',
       padding: '2rem',
@@ -103,12 +101,12 @@ const HomePage = () => {
     }}>
       {/* Left side: Map */}
       <div style={{
-        gridColumn: '1 / 2',
-        gridRow: '1 / 2',
+        flex: 1,
         borderRadius: '1rem',
         overflow: 'hidden',
         border: `2px solid ${colors['bg-tertiary']}`,
         boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+        display: 'flex',
       }}>
         <MapBox
           center={center}
@@ -123,27 +121,30 @@ const HomePage = () => {
 
       {/* Right side: Panels */}
       <div style={{
-        gridColumn: '2 / 3',
-        gridRow: '1 / 2',
-        display: 'grid',
-        gridTemplateRows: '1fr 1fr',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
         gap: '2rem'
       }}>
         <div style={{
-          gridRow: '1 / 2',
+          flex: 1,
           backgroundColor: colors['bg-secondary'],
           borderRadius: '1rem',
           padding: '1.5rem',
           border: `1px solid ${colors['bg-tertiary']}`,
+          display: 'flex',
+          flexDirection: 'column',
         }}>
           <MediaControlPanel />
         </div>
         <div style={{
-          gridRow: '2 / 3',
+          flex: 1,
           backgroundColor: colors['bg-secondary'],
           borderRadius: '1rem',
           padding: '1.5rem',
           border: `1px solid ${colors['bg-tertiary']}`,
+          display: 'flex',
+          flexDirection: 'column',
         }}>
           <LightControlPanel />
         </div>

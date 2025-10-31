@@ -353,14 +353,16 @@ const NavigationPage = () => {
     <div
       style={{
         width: '100%',
-        height: '100vh',
+        height: 'calc(100vh - 5rem)', // Account for nav bar
         backgroundColor: colors['bg-primary'],
         position: 'relative',
         overflow: 'hidden',
       }}
     >
       {/* Directions Search */}
-      <Directions onDestinationSelect={handleDestinationSelect} onToggle={() => setShowDirections(!showDirections)} />
+      <div style={{ position: 'absolute', top: '2rem', left: '2rem', zIndex: 10 }}>
+        <Directions onDestinationSelect={handleDestinationSelect} onToggle={() => setShowDirections(!showDirections)} />
+      </div>
 
       {/* Map Container */}
       <div
@@ -380,24 +382,28 @@ const NavigationPage = () => {
         />
       </div>
 
-      {/* Music Control Widget - shows when music is playing */}
-      <MusicControlWidget
-        isPlaying={musicState.isPlaying}
-        currentTrack={musicState.currentTrack}
-        albumArtUrl={musicState.albumArtUrl}
-        onPlayPause={handlePlayPause}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-      />
+      {/* Music Control Widget */}
+      <div style={{ position: 'absolute', bottom: '2rem', left: '2rem', zIndex: 10 }}>
+        <MusicControlWidget
+          isPlaying={musicState.isPlaying}
+          currentTrack={musicState.currentTrack}
+          albumArtUrl={musicState.albumArtUrl}
+          onPlayPause={handlePlayPause}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+        />
+      </div>
 
       {/* Trip Manager */}
       {route && (
-        <TripManager
-          tripActive={tripActive}
-          onBegin={handleBeginTrip}
-          onCancel={handleCancelTrip}
-          onStop={handleStopTrip}
-        />
+        <div style={{ position: 'absolute', bottom: '2rem', right: '2rem', zIndex: 10 }}>
+          <TripManager
+            tripActive={tripActive}
+            onBegin={handleBeginTrip}
+            onCancel={handleCancelTrip}
+            onStop={handleStopTrip}
+          />
+        </div>
       )}
     </div>
   );

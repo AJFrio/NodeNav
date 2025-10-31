@@ -16,8 +16,6 @@ const View = ({ children }) => {
         bottom: 0,
         zIndex: 10,
         transition: 'opacity 0.2s ease-in-out',
-        padding: '2rem',
-        overflowY: 'auto',
       }}
     >
       {children}

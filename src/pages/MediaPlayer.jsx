@@ -264,17 +264,21 @@ const MediaPlayer = () => {
       backgroundColor: colors['bg-primary'],
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'space-around',
-      padding: '1rem 2rem',
-      overflow: 'hidden',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '2rem',
+      boxSizing: 'border-box',
     }}>
       {/* Header */}
       <div style={{
+        width: '100%',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '1rem',
-        flexShrink: 0,
+        position: 'absolute',
+        top: '2rem',
+        left: '2rem',
+        right: '2rem',
       }}>
         <h1 style={{
           ...styles.typography.h2,
@@ -305,19 +309,19 @@ const MediaPlayer = () => {
         )}
       </div>
 
-      {/* Album Art */}
+      {/* Main Content */}
       <div style={{
-        flex: '0 0 auto',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: '0.75rem',
+        width: '100%',
+        maxWidth: '400px',
       }}>
+        {/* Album Art */}
         <div style={{
-          width: 'min(220px, 45vw)',
-          height: 'min(220px, 45vw)',
-          maxWidth: '220px',
-          maxHeight: '220px',
+          width: '100%',
+          paddingTop: '100%', // Aspect ratio 1:1
           backgroundColor: colors['bg-secondary'],
           border: `2px solid ${colors['bg-tertiary']}`,
           borderRadius: '1rem',
@@ -327,164 +331,148 @@ const MediaPlayer = () => {
           boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
           overflow: 'hidden',
           position: 'relative',
+          marginBottom: '2rem',
         }}>
-          {isLoadingArt ? (
-            // Loading spinner
-            <div style={{
-              textAlign: 'center',
-            }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                margin: '0 auto 0.75rem',
-                border: `4px solid ${colors['bg-tertiary']}`,
-                borderTop: `4px solid ${colors.primary}`,
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-              }} />
-              <div style={{
-                ...styles.typography.caption,
-                color: colors['text-tertiary'],
-                fontSize: '0.75rem',
-              }}>
-                Loading...
-              </div>
-            </div>
-          ) : albumArtUrl ? (
-            // Display album art
-            <img
-              src={albumArtUrl}
-              alt={`${currentTrack.album} by ${currentTrack.artist}`}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
-              onError={(e) => {
-                console.error('[Media Player] Album art failed to load');
-                setAlbumArtUrl(null);
-              }}
-            />
-          ) : (
-            // Placeholder when no album art
-            <div style={{
-              textAlign: 'center',
-            }}>
-              <div style={{
-                width: '70px',
-                height: '70px',
-                margin: '0 auto 0.75rem',
-                backgroundColor: colors['bg-tertiary'],
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg
-                  width="45"
-                  height="45"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={colors['text-tertiary']}
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </div>
-              <div style={{
-                ...styles.typography.caption,
-                color: colors['text-tertiary'],
-                fontSize: '0.75rem',
-              }}>
-                No Artwork
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Keyframe animation for loading spinner */}
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-
-      {/* Track Info */}
-      <div style={{
-        textAlign: 'center',
-        marginBottom: '0.75rem',
-        flexShrink: 0,
-      }}>
-        <h2 style={{
-          fontSize: '1.5rem',
-          fontWeight: '400',
-          color: colors['text-primary'],
-          marginBottom: '0.375rem',
-          margin: 0,
-        }}>
-          {currentTrack.title}
-        </h2>
-        <p style={{
-          fontSize: '0.875rem',
-          color: colors['text-secondary'],
-          margin: '0.375rem 0 0 0',
-        }}>
-          {currentTrack.artist}
-        </p>
-      </div>
-
-      {/* Progress Bar */}
-      <div style={{ 
-        marginBottom: '0.75rem',
-        flexShrink: 0,
-      }}>
-        <div
-          onClick={handleProgressClick}
-          style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: colors['bg-tertiary'],
-            borderRadius: '4px',
-            cursor: 'pointer',
-            position: 'relative',
-            marginBottom: '0.5rem',
-          }}
-        >
           <div style={{
-            width: `${progressPercentage}%`,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
             height: '100%',
-            backgroundColor: colors.primary,
-            borderRadius: '4px',
-            transition: 'width 0.1s linear',
-          }} />
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {isLoadingArt ? (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: '50px',
+                  height: '50px',
+                  margin: '0 auto 0.75rem',
+                  border: `4px solid ${colors['bg-tertiary']}`,
+                  borderTop: `4px solid ${colors.primary}`,
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }} />
+                <div style={{ ...styles.typography.caption, color: colors['text-tertiary'], fontSize: '0.75rem' }}>
+                  Loading...
+                </div>
+              </div>
+            ) : albumArtUrl ? (
+              <img
+                src={albumArtUrl}
+                alt={`${currentTrack.album} by ${currentTrack.artist}`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={() => setAlbumArtUrl(null)}
+              />
+            ) : (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: '70px',
+                  height: '70px',
+                  margin: '0 auto 0.75rem',
+                  backgroundColor: colors['bg-tertiary'],
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <svg
+                    width="45"
+                    height="45"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={colors['text-tertiary']}
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </div>
+                <div style={{ ...styles.typography.caption, color: colors['text-tertiary'], fontSize: '0.75rem' }}>
+                  No Artwork
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        
-        {/* Time Labels */}
+
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+
+        {/* Track Info */}
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem', width: '100%' }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '400',
+            color: colors['text-primary'],
+            marginBottom: '0.375rem',
+            margin: 0,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {currentTrack.title}
+          </h2>
+          <p style={{
+            fontSize: '0.875rem',
+            color: colors['text-secondary'],
+            margin: '0.375rem 0 0 0',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {currentTrack.artist}
+          </p>
+        </div>
+
+        {/* Progress Bar */}
+        <div style={{ width: '100%', marginBottom: '1.5rem' }}>
+          <div
+            onClick={handleProgressClick}
+            style={{
+              width: '100%',
+              height: '8px',
+              backgroundColor: colors['bg-tertiary'],
+              borderRadius: '4px',
+              cursor: 'pointer',
+              position: 'relative',
+              marginBottom: '0.5rem',
+            }}
+          >
+            <div style={{
+              width: `${progressPercentage}%`,
+              height: '100%',
+              backgroundColor: colors.primary,
+              borderRadius: '4px',
+              transition: 'width 0.1s linear',
+            }} />
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '0.75rem',
+            color: colors['text-tertiary'],
+          }}>
+            <span>{formatTime(currentTrack.position)}</span>
+            <span>{formatTime(currentTrack.duration)}</span>
+          </div>
+        </div>
+
+        {/* Playback Controls */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: '0.75rem',
-          color: colors['text-tertiary'],
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1.5rem',
         }}>
-          <span>{formatTime(currentTrack.position)}</span>
-          <span>{formatTime(currentTrack.duration)}</span>
-        </div>
-      </div>
-
-      {/* Playback Controls */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1.5rem',
-        marginBottom: '0',
-        flexShrink: 0,
-      }}>
         {/* Previous Button */}
         <button
           onClick={handlePrevious}
@@ -570,6 +558,7 @@ const MediaPlayer = () => {
         >
           <SkipForward size={26} color={colors['text-primary']} />
         </button>
+      </div>
       </div>
 
       {/* Hidden audio element for actual audio streaming */}
