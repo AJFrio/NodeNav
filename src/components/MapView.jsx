@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-const View = ({ children }) => {
+const MapView = ({ children }) => {
   const location = useLocation();
 
   return (
@@ -16,8 +16,6 @@ const View = ({ children }) => {
         bottom: 0,
         zIndex: 10,
         transition: 'opacity 0.2s ease-in-out',
-        padding: '2rem',
-        overflowY: 'auto',
       }}
     >
       {children}
@@ -25,4 +23,4 @@ const View = ({ children }) => {
   );
 };
 
-export default View;
+export default MapView;

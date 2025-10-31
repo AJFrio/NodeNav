@@ -9,6 +9,7 @@ import NavigationPage from './pages/NavigationPage';
 import HomePage from './pages/HomePage';
 import SettingsButton from './components/SettingsButton';
 import View from './components/View';
+import MapView from './components/MapView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { styles, getColors } from './styles';
@@ -125,10 +126,10 @@ function AppContent() {
     <Router>
       <Layout>
         <Routes>
-          <Route path="/" element={<View><HomePage /></View>} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/gpio" element={<View><GPIOControl /></View>} />
-          <Route path="/navigation" element={<View><NavigationPage /></View>} />
-          <Route path="/media" element={<View><MediaPlayer /></View>} />
+          <Route path="/navigation" element={<MapView><NavigationPage /></MapView>} />
+          <Route path="/media" element={<MediaPlayer />} />
           <Route path="/settings" element={<View><SettingsPage /></View>} />
           <Route path="/settings/bluetooth" element={<View><BluetoothSettings /></View>} />
           <Route path="/settings/display" element={<View><DisplaySettings /></View>} />

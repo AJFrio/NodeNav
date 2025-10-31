@@ -316,7 +316,7 @@ const MediaPlayer = () => {
         alignItems: 'center',
         justifyContent: 'center',
         width: '100%',
-        maxWidth: '400px',
+        maxWidth: '320px',
       }}>
         {/* Album Art */}
         <div style={{

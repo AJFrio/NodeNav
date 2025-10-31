@@ -8,6 +8,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
 import { bluetoothAPI } from '../services/api';
 import { useMapSync } from '../hooks/useMapSync';
+import MapView from '../components/MapView';
 import SearchIcon from '../components/icons/SearchIcon';
 
 const NavigationPage = () => {
@@ -350,17 +351,9 @@ const NavigationPage = () => {
   }
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: 'calc(100vh - 5rem)', // Account for nav bar
-        backgroundColor: colors['bg-primary'],
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <MapView>
       {/* Directions Search */}
-      <div style={{ position: 'absolute', top: '2rem', left: '2rem', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: '2rem', right: '2rem', zIndex: 10 }}>
         <Directions onDestinationSelect={handleDestinationSelect} onToggle={() => setShowDirections(!showDirections)} />
       </div>
 
@@ -405,7 +398,7 @@ const NavigationPage = () => {
           />
         </div>
       )}
-    </div>
+    </MapView>
   );
 };
 
