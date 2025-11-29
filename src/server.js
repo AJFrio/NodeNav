@@ -4,7 +4,6 @@ const http = require('http');
 const os = require('os');
 const gpioService = require('./services/gpio-service');
 const bluetoothService = require('./services/bluetooth-service');
-const bluetoothAudioService = require('./services/bluetooth-audio-service');
 const lightsService = require('./services/lights-service');
 
 const app = express();
@@ -26,7 +25,6 @@ if (isLinux) {
 
 gpioService.initialize().catch(console.error);
 bluetoothService.initialize().catch(console.error);
-bluetoothAudioService.initialize().catch(console.error);
 lightsService.initialize(server).catch(console.error);
 
 /**
@@ -326,7 +324,7 @@ app.delete('/api/bluetooth/history', (req, res) => {
 app.post('/api/bluetooth/audio/connect/:address', async (req, res) => {
   try {
     const { address } = req.params;
-    const result = await bluetoothAudioService.connectAudioDevice(address);
+    const result = await bluetoothService.connectAudioDevice(address);
     res.json(result);
   } catch (error) {
     console.error(`Error connecting audio to device ${req.params.address}:`, error);
@@ -352,7 +350,7 @@ app.post('/api/bluetooth/audio/disconnect', async (req, res) => {
  */
 app.get('/api/bluetooth/audio/state', async (req, res) => {
   try {
-    const state = await bluetoothAudioService.getMediaState();
+    const state = await bluetoothService.getMediaState();
     res.json(state);
   } catch (error) {
     console.error('Error getting media state:', error);
@@ -365,7 +363,7 @@ app.get('/api/bluetooth/audio/state', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/play', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.play();
+    const result = await bluetoothService.play();
     res.json(result);
   } catch (error) {
     console.error('Error playing media:', error);
@@ -378,7 +376,7 @@ app.post('/api/bluetooth/audio/play', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/pause', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.pause();
+    const result = await bluetoothService.pause();
     res.json(result);
   } catch (error) {
     console.error('Error pausing media:', error);
@@ -391,7 +389,7 @@ app.post('/api/bluetooth/audio/pause', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/next', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.next();
+    const result = await bluetoothService.next();
     res.json(result);
   } catch (error) {
     console.error('Error skipping to next track:', error);
@@ -404,7 +402,7 @@ app.post('/api/bluetooth/audio/next', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/previous', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.previous();
+    const result = await bluetoothService.previous();
     res.json(result);
   } catch (error) {
     console.error('Error going to previous track:', error);
@@ -417,7 +415,7 @@ app.post('/api/bluetooth/audio/previous', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/stop', async (req, res) => {
   try {
-    const result = await bluetoothAudioService.stop();
+    const result = await bluetoothService.stop();
     res.json(result);
   } catch (error) {
     console.error('Error stopping playback:', error);
@@ -627,7 +625,6 @@ process.on('SIGINT', () => {
   Promise.all([
     gpioService.cleanup(),
     bluetoothService.cleanup(),
-    bluetoothAudioService.cleanup(),
     lightsService.cleanup()
   ]).then(() => {
     process.exit(0);
@@ -639,7 +636,6 @@ process.on('SIGTERM', () => {
   Promise.all([
     gpioService.cleanup(),
     bluetoothService.cleanup(),
-    bluetoothAudioService.cleanup(),
     lightsService.cleanup()
   ]).then(() => {
     process.exit(0);
