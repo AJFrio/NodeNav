@@ -41,6 +41,7 @@ function AppContent() {
     { id: 'media', label: 'Media', icon: MusicIcon },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
+  const selectedNavItem = ['bluetooth', 'display', 'data'].includes(currentView) ? 'settings' : currentView;
 
   const renderView = (viewId) => {
     const isActive = currentView === viewId;
@@ -56,19 +57,20 @@ function AppContent() {
       bottom: 0,
       zIndex: isActive ? 10 : 1,
       transition: 'opacity 0.2s ease-in-out',
-      padding: '2rem',
+      padding: 'clamp(1rem, 2vw, 1.5rem)',
     };
+    const wrapperProps = { key: viewId, 'aria-hidden': !isActive, inert: !isActive };
 
     switch (viewId) {
       case 'gpio':
-        return <div key="gpio" style={{...commonStyle, overflowY: 'auto'}}><GPIOControl /></div>;
+        return <div {...wrapperProps} style={{...commonStyle, overflowY: 'auto'}}><GPIOControl /></div>;
       case 'navigation':
-        return <div key="navigation" style={{...commonStyle, padding: 0}}><NavigationPage /></div>;
+        return <div {...wrapperProps} style={{...commonStyle, padding: 0}}><NavigationPage /></div>;
       case 'media':
-        return <div key="media" style={{...commonStyle, padding: 0, overflowY: 'auto'}}><MediaPlayer /></div>;
+        return <div {...wrapperProps} style={{...commonStyle, padding: 0, overflowY: 'auto'}}><MediaPlayer /></div>;
       case 'settings':
         return (
-          <div key="settings" style={{...commonStyle, overflowY: 'auto'}}>
+          <div {...wrapperProps} style={{...commonStyle, overflowY: 'auto'}}>
             <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
               <h1 style={{ ...styles.typography.h1, color: colors['text-primary'] }}>
                 Settings
@@ -76,7 +78,7 @@ function AppContent() {
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '1.5rem',
+                gap: '1rem',
               }}>
                 <SettingsButton
                   icon={SmartphoneIcon}
@@ -101,27 +103,24 @@ function AppContent() {
           </div>
         );
       case 'bluetooth':
-        return <div key="bluetooth" style={{...commonStyle, overflowY: 'auto'}}><BluetoothSettings /></div>;
+        return <div {...wrapperProps} style={{...commonStyle, overflowY: 'auto'}}><BluetoothSettings /></div>;
       case 'display':
-        return <div key="display" style={{...commonStyle, overflowY: 'auto'}}><DisplaySettings /></div>;
+        return <div {...wrapperProps} style={{...commonStyle, overflowY: 'auto'}}><DisplaySettings /></div>;
       case 'data':
-        return <div key="data" style={{...commonStyle, overflowY: 'auto'}}><DataPage /></div>;
+        return <div {...wrapperProps} style={{...commonStyle, overflowY: 'auto'}}><DataPage /></div>;
       case 'home':
       default:
         // The new HomePage has its own padding and layout
-        return <div key="home" style={{...commonStyle, padding: 0}}><HomePage /></div>;
+        return <div {...wrapperProps} style={{...commonStyle, padding: 0}}><HomePage /></div>;
     }
   };
 
   return (
-    <div style={{
-      height: '100vh',
+    <div className="app-shell" data-theme={theme} style={{
       backgroundColor: colors['bg-primary'],
       color: colors['text-primary'],
-      overflow: 'hidden',
-      transition: 'background-color 300ms ease-in-out, color 300ms ease-in-out',
     }}>
-      <main style={{ height: 'calc(100% - 5rem)', position: 'relative' }}>
+      <main className="app-main">
         {renderView('home')}
         {renderView('gpio')}
         {renderView('navigation')}
@@ -131,14 +130,14 @@ function AppContent() {
         {renderView('display')}
         {renderView('data')}
       </main>
-      <nav style={{...styles.navigation.bottombar, borderTop: `1px solid ${colors['bg-tertiary']}`}}>
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+      <nav className="app-bottom-nav" aria-label="Main navigation" style={{ borderTop: `1px solid ${colors['bg-tertiary']}` }}>
+        <div className="app-bottom-nav__items">
           {navigationItems.map((item) => (
             <NavigationItem
               key={item.id}
               icon={item.icon}
               label={item.label}
-              isActive={currentView === item.id}
+              isActive={selectedNavItem === item.id}
               onClick={() => setCurrentView(item.id)}
             />
           ))}

@@ -31,8 +31,7 @@ const MusicControlWidget = ({
         padding: '1rem',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
         zIndex: 1000,
-        minWidth: '300px',
-        maxWidth: '400px',
+        width: 'min(340px, calc(100vw - 32px))',
         transition: 'all 300ms ease-in-out',
       }}
     >
@@ -48,9 +47,9 @@ const MusicControlWidget = ({
         {/* Small Album Art Thumbnail */}
         <div
           style={{
-            width: '50px',
-            height: '50px',
-            minWidth: '50px',
+            width: '48px',
+            height: '48px',
+            minWidth: '48px',
             backgroundColor: colors['bg-tertiary'],
             borderRadius: '0.375rem',
             overflow: 'hidden',
@@ -132,25 +131,19 @@ const MusicControlWidget = ({
         {/* Previous Button */}
         <button
           onClick={onPrevious}
+          className="music-widget-button"
+          type="button"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '40px',
-            height: '40px',
+            width: '48px',
+            height: '48px',
             backgroundColor: colors['bg-tertiary'],
             border: 'none',
             borderRadius: '50%',
             cursor: 'pointer',
             transition: 'all 200ms ease-in-out',
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = colors['bg-quaternary'];
-            e.target.style.transform = 'scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = colors['bg-tertiary'];
-            e.target.style.transform = 'scale(1)';
           }}
           aria-label="Previous track"
         >
@@ -160,6 +153,8 @@ const MusicControlWidget = ({
         {/* Play/Pause Button */}
         <button
           onClick={onPlayPause}
+          className="music-widget-button music-widget-button--primary"
+          type="button"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -171,14 +166,6 @@ const MusicControlWidget = ({
             borderRadius: '50%',
             cursor: 'pointer',
             transition: 'all 200ms ease-in-out',
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = colors['primary-hover'];
-            e.target.style.transform = 'scale(1.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = colors.primary;
-            e.target.style.transform = 'scale(1)';
           }}
           aria-label={isPlaying ? 'Pause' : 'Play'}
         >
@@ -192,25 +179,19 @@ const MusicControlWidget = ({
         {/* Next Button */}
         <button
           onClick={onNext}
+          className="music-widget-button"
+          type="button"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '40px',
-            height: '40px',
+            width: '48px',
+            height: '48px',
             backgroundColor: colors['bg-tertiary'],
             border: 'none',
             borderRadius: '50%',
             cursor: 'pointer',
             transition: 'all 200ms ease-in-out',
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = colors['bg-quaternary'];
-            e.target.style.transform = 'scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = colors['bg-tertiary'];
-            e.target.style.transform = 'scale(1)';
           }}
           aria-label="Next track"
         >
@@ -222,4 +203,3 @@ const MusicControlWidget = ({
 };
 
 export default MusicControlWidget;
-

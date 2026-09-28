@@ -69,15 +69,15 @@ const MediaControlPanel = () => {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <h2 style={{ ...styles.typography.h3, color: colors['text-primary'], marginBottom: '1rem', flexShrink: 0 }}>
+      <h2 style={{ ...styles.typography.h3, color: colors['text-primary'], marginBottom: '0.65rem', flexShrink: 0 }}>
         Media
       </h2>
       <div style={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
         {/* Album Art */}
         <div style={{
-          width: '100px',
-          height: '100px',
-          borderRadius: '0.5rem',
+          width: '84px',
+          height: '84px',
+          borderRadius: '0.75rem',
           backgroundColor: colors['bg-tertiary'],
           overflow: 'hidden',
           display: 'flex',
@@ -101,14 +101,14 @@ const MediaControlPanel = () => {
           <p style={{ margin: '0.25rem 0 1rem 0', color: colors['text-secondary'], fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {currentTrack.artist}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button onClick={handlePrevious} style={controlButtonStyle(colors)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <button type="button" aria-label="Previous track" onClick={handlePrevious} style={controlButtonStyle(colors)}>
               <SkipBack size={20} color={colors['text-primary']} />
             </button>
-            <button onClick={handlePlayPause} style={{ ...controlButtonStyle(colors), width: '45px', height: '45px', backgroundColor: colors.primary }}>
+            <button type="button" aria-label={isPlaying ? 'Pause' : 'Play'} onClick={handlePlayPause} style={{ ...controlButtonStyle(colors), width: '52px', height: '52px', backgroundColor: colors.primary }}>
               {isPlaying ? <Pause size={22} color={colors['bg-primary']} fill={colors['bg-primary']} /> : <Play size={22} color={colors['bg-primary']} fill={colors['bg-primary']} style={{ marginLeft: '3px' }} />}
             </button>
-            <button onClick={handleNext} style={controlButtonStyle(colors)}>
+            <button type="button" aria-label="Next track" onClick={handleNext} style={controlButtonStyle(colors)}>
               <SkipForward size={20} color={colors['text-primary']} />
             </button>
           </div>
@@ -119,8 +119,8 @@ const MediaControlPanel = () => {
 };
 
 const controlButtonStyle = (colors) => ({
-  width: '40px',
-  height: '40px',
+  width: '48px',
+  height: '48px',
   backgroundColor: colors['bg-tertiary'],
   border: `1px solid ${colors['bg-quaternary'] || colors['bg-tertiary']}`,
   borderRadius: '50%',
@@ -128,7 +128,7 @@ const controlButtonStyle = (colors) => ({
   alignItems: 'center',
   justifyContent: 'center',
   cursor: 'pointer',
-  transition: 'background-color 150ms ease',
+  transition: 'background-color 150ms ease, transform 120ms ease',
 });
 
 export default MediaControlPanel;

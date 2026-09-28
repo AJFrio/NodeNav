@@ -1,5 +1,5 @@
 import React from 'react';
-import { styles, mergeStyles, getColors } from '../styles';
+import { getColors } from '../styles';
 import { useTheme } from '../contexts/ThemeContext';
 
 const NavigationItem = ({
@@ -12,35 +12,19 @@ const NavigationItem = ({
   const { theme } = useTheme();
   const colors = getColors(theme);
   
-  const itemStyle = mergeStyles(
-    styles.navigation.item,
-    isActive ? styles.navigation.itemActive : styles.navigation.itemInactive
-  );
-
-  const iconContainerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '2.5rem', // 40px
-    height: '2.5rem', // 40px
-    borderRadius: '50%',
-    transition: 'background-color 150ms ease-in-out',
-    backgroundColor: isActive ? colors.primary : 'transparent',
-  };
-
   return (
     <button
-      style={itemStyle}
+      type="button"
+      className={`bottom-nav-item${isActive ? ' is-active' : ''} ${className}`.trim()}
       onClick={onClick}
       title={label}
-      className={className}
+      aria-label={label}
+      aria-current={isActive ? 'page' : undefined}
     >
-      <div style={iconContainerStyle}>
-        <Icon 
-          size={24}
-          color={isActive ? colors['bg-primary'] : 'currentColor'}
-        />
-      </div>
+      <span className="bottom-nav-item__icon">
+        <Icon size={21} color={isActive ? colors.primary : 'currentColor'} />
+      </span>
+      <span className="bottom-nav-item__label">{label}</span>
     </button>
   );
 };
