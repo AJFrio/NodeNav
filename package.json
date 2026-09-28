@@ -2,7 +2,7 @@
   "name": "nodenav",
   "version": "1.0.0",
   "description": "Open source headunit",
-  "main": "index.js",
+  "main": "Headunit/index.js",
   "scripts": {
     "build": "vite build",
     "preview": "vite preview",

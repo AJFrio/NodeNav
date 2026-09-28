@@ -13,7 +13,7 @@ A complete Bluetooth audio streaming system for NodeNav that enables:
 
 ### New Files
 
-1. **`src/services/bluetooth-audio-service.js`** (444 lines)
+1. **`Headunit/src/services/bluetooth-audio-service.js`** (444 lines)
    - Core Bluetooth audio service
    - Handles A2DP audio streaming
    - Implements AVRCP media controls
@@ -37,19 +37,19 @@ A complete Bluetooth audio streaming system for NodeNav that enables:
 
 ### Modified Files
 
-1. **`src/pages/MediaPlayer.jsx`**
+1. **`Headunit/src/pages/MediaPlayer.jsx`**
    - Replaced simulation with real API calls
    - Added automatic device connection on mount
    - Implemented state polling from backend
    - Connected all controls to Bluetooth API
    - Added error handling
 
-2. **`src/server.js`**
+2. **`Headunit/src/server.js`**
    - Added Bluetooth audio service initialization
    - Added 8 new API endpoints for media control
    - Integrated cleanup for graceful shutdown
 
-3. **`src/services/api.js`**
+3. **`Headunit/src/services/api.js`**
    - Added 8 new methods in BluetoothAPI class:
      - `connectAudio(address)`
      - `disconnectAudio()`
@@ -60,7 +60,7 @@ A complete Bluetooth audio streaming system for NodeNav that enables:
      - `previousTrack()`
      - `stopMedia()`
 
-4. **`src/App.jsx`**
+4. **`Headunit/src/App.jsx`**
    - Added MediaPlayer import
    - Added 'media' route case
    - Connected Media card click handler
@@ -270,7 +270,7 @@ POST /api/bluetooth/audio/stop
 
 ### With Real Device (Recommended)
 1. Run setup script: `./setup-bluetooth-audio.sh`
-2. Start backend: `cd src && node server.js`
+2. Start backend: `cd Headunit/src && node server.js`
 3. Start frontend: `npm run dev`
 4. Pair phone via Bluetooth Settings
 5. Open Media Player
@@ -336,7 +336,7 @@ The backend includes fallback mock data when no device is connected, allowing de
 
 1. **Read the setup guide**: `BLUETOOTH_AUDIO_SETUP.md`
 2. **Run the setup script** (Linux): `./setup-bluetooth-audio.sh`
-3. **Start the backend**: `node src/server.js`
+3. **Start the backend**: `node Headunit/src/server.js`
 4. **Start the frontend**: `npm run dev`
 5. **Pair your device** in Bluetooth Settings
 6. **Navigate to Media Player** and enjoy!

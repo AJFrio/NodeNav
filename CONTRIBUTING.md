@@ -61,7 +61,7 @@ Documentation improvements are always appreciated:
 
 ```bash
 # Terminal 1: Start backend server
-cd src
+cd Headunit/src
 node server.js
 
 # Terminal 2: Start frontend dev server
@@ -78,7 +78,7 @@ npm run dev
 - Use meaningful variable and function names
 
 **Styling:**
-- Use the centralized styles from `src/styles.js`
+- Use the centralized styles from `Headunit/src/styles.js`
 - Maintain the minimalist black theme
 - Keep the UI touch-friendly (large hit targets)
 - Test on different screen sizes
@@ -198,22 +198,22 @@ Backend (Node.js/Express)
 
 ### Key Areas
 
-**Media Player** (`src/pages/MediaPlayer.jsx`)
+**Media Player** (`Headunit/src/pages/MediaPlayer.jsx`)
 - Bluetooth audio streaming
 - Playback controls
 - Metadata display
 
-**Bluetooth Management** (`src/pages/BluetoothSettings.jsx`)
+**Bluetooth Management** (`Headunit/src/pages/BluetoothSettings.jsx`)
 - Device discovery
 - Pairing/connection
 - Device list management
 
-**GPIO Control** (`src/pages/GPIOControl.jsx`)
+**GPIO Control** (`Headunit/src/pages/GPIOControl.jsx`)
 - Pin configuration
 - Real-time control
 - Command history
 
-**Backend Services** (`src/services/`)
+**Backend Services** (`Headunit/src/services/`)
 - Bluetooth audio (platform-specific)
 - Bluetooth device management
 - GPIO operations
@@ -223,8 +223,8 @@ Backend (Node.js/Express)
 
 ### Adding a New Page
 
-1. Create component in `src/pages/YourPage.jsx`
-2. Add route in `src/App.jsx`
+1. Create component in `Headunit/src/pages/YourPage.jsx`
+2. Add route in `Headunit/src/App.jsx`
 3. Add navigation item if needed
 4. Follow existing page structure
 5. Use centralized styles

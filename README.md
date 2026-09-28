@@ -72,7 +72,7 @@ cd NodeNav
 npm install
 
 # Start the backend server
-cd src
+cd Headunit/src
 node server.js
 
 # In another terminal, start the frontend
@@ -226,40 +226,22 @@ Use the bottom navigation bar to quickly switch between:
 
 ```
 NodeNav/
-├── src/
-│   ├── App.jsx                    # Main application component
-│   ├── main.jsx                   # Entry point
-│   ├── style.css                  # Global styles
-│   ├── styles.js                  # Centralized style definitions
-│   │
-│   ├── components/                # Reusable UI components
-│   │   ├── HomeScreenCard.jsx
-│   │   ├── NavigationItem.jsx
-│   │   └── SettingsButton.jsx
-│   │
-│   ├── pages/                     # Main page components
-│   │   ├── BluetoothSettings.jsx
-│   │   ├── GPIOControl.jsx
-│   │   └── MediaPlayer.jsx
-│   │
-│   ├── services/                  # Backend services
-│   │   ├── api.js                 # Frontend API client
-│   │   ├── bluetooth-service.js   # Bluetooth device management (platform router)
-│   │   ├── bluetooth-device-linux.js   # Linux Bluetooth (BlueZ/D-Bus) - NEW!
-│   │   ├── bluetooth-audio-service.js  # Audio streaming (platform router)
-│   │   ├── gpio-service.js        # GPIO control
-│   │   └── server.js              # Express backend server
-│   │
-├── docs/                          # Documentation
-│   ├── BLUETOOTH_AUDIO_SETUP.md
-│   ├── BLUETOOTH_AUDIO_IMPLEMENTATION.md
-│   ├── LINUX_BLUETOOTH_GUIDE.md
-│   └── LINUX_BLUETOOTH_IMPLEMENTATION.md
-│
-├── setup-bluetooth-audio.sh       # Linux setup script
+├── Headunit/                       # React UI, Express backend, and Electron shell
+│   ├── index.html
+│   ├── index.js                    # Electron main process
+│   ├── preload.js
+│   └── src/
+│       ├── App.jsx
+│       ├── main.jsx
+│       ├── components/
+│       ├── pages/
+│       └── services/               # API client and backend services
+├── Accessories/
+│   └── Lights/                     # ESP-01 light controller firmware and guide
+├── App/                            # Reserved for future app modules
+├── docs/
 ├── package.json
 ├── vite.config.js
-├── tailwind.config.js
 └── README.md
 ```
 
@@ -269,7 +251,7 @@ NodeNav/
 
 ```bash
 # Terminal 1: Backend server with hot reload
-cd src
+cd Headunit/src
 node server.js
 
 # Terminal 2: Frontend with hot reload
