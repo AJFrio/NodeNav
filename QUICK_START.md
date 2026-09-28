@@ -28,7 +28,7 @@ npm install
 
 ```bash
 # Open a terminal in the NodeNav directory
-cd src
+cd Headunit/src
 node server.js
 ```
 
@@ -115,7 +115,7 @@ Local: http://localhost:5173/
 ```bash
 # Press Ctrl+C in the backend terminal
 # Then restart:
-node src/server.js
+node Headunit/src/server.js
 ```
 
 ### Restart Frontend
@@ -137,7 +137,7 @@ Look at the terminal where you ran `node server.js`
 ### Change Port
 ```bash
 # Set PORT environment variable before starting:
-PORT=3002 node src/server.js
+PORT=3002 node Headunit/src/server.js
 ```
 
 When running the Vite UI in a separate process, set `VITE_API_PORT` to the same value (for example, `VITE_API_PORT=3002 npm run dev`). Electron reads `PORT` directly for its API requests.
@@ -145,7 +145,7 @@ When running the Vite UI in a separate process, set `VITE_API_PORT` to the same 
 ## ❓ Troubleshooting
 
 ### "Cannot connect to backend"
-- ✅ Make sure backend is running (`node src/server.js`)
+- ✅ Make sure backend is running (`node Headunit/src/server.js`)
 - ✅ Check backend terminal for errors
 - ✅ Verify port 3001 is not in use
 
@@ -198,9 +198,9 @@ lsof -i :3001
 - 🔧 [Implementation Details](BLUETOOTH_AUDIO_IMPLEMENTATION.md) - Technical deep dive
 
 ### Customize
-- 🎨 Edit `src/styles.js` to change colors
-- 📱 Modify `src/pages/` to customize pages
-- ⚙️ Check `src/services/` for backend logic
+- 🎨 Edit `Headunit/src/styles.js` to change colors
+- 📱 Modify `Headunit/src/pages/` to customize pages
+- ⚙️ Check `Headunit/src/services/` for backend logic
 
 ### Contribute
 - 🐛 [Report bugs](https://github.com/yourusername/NodeNav/issues)
@@ -213,7 +213,7 @@ lsof -i :3001
 ```bash
 # Develop on Windows:
 npm run dev  # Frontend hot reload
-node src/server.js  # Backend
+node Headunit/src/server.js  # Backend
 
 # Deploy to Linux:
 # Copy files, run setup script, same commands work!
@@ -246,7 +246,7 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/NodeNav
-ExecStart=/usr/bin/node /home/pi/NodeNav/src/server.js
+ExecStart=/usr/bin/node /home/pi/NodeNav/Headunit/src/server.js
 Restart=always
 
 [Install]

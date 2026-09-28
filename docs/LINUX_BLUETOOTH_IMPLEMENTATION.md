@@ -8,7 +8,7 @@ Successfully implemented **full native Bluetooth device management** for Linux s
 
 ### New Files
 
-1. **`src/services/bluetooth-device-linux.js`** (668 lines)
+1. **`Headunit/src/services/bluetooth-device-linux.js`** (668 lines)
    - Complete BlueZ/D-Bus integration
    - Real-time device discovery via D-Bus signals
    - Full device lifecycle management (scan, pair, connect, disconnect, unpair)
@@ -30,7 +30,7 @@ Successfully implemented **full native Bluetooth device management** for Linux s
 
 ### Modified Files
 
-1. **`src/services/bluetooth-service.js`**
+1. **`Headunit/src/services/bluetooth-service.js`**
    - Updated to load real Linux implementation instead of simulation
    - Cleaner platform detection code
    - Removed 400+ lines of simulation code

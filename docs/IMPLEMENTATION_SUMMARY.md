@@ -8,7 +8,7 @@ All components of the ESP-01 wireless light control system have been successfull
 
 ### 1. Backend Infrastructure (Node.js/Express)
 
-#### WebSocket Server (`src/services/lights-service.js`)
+#### WebSocket Server (`Headunit/src/services/lights-service.js`)
 - ✅ WebSocket server on port 3001 at `/ws/lights`
 - ✅ Connection management using Map data structure
 - ✅ Client registration handling (unitId → connection mapping)
@@ -19,7 +19,7 @@ All components of the ESP-01 wireless light control system have been successfull
 - ✅ Command history tracking
 - ✅ Graceful shutdown
 
-#### REST API Endpoints (`src/server.js`)
+#### REST API Endpoints (`Headunit/src/server.js`)
 - ✅ `GET /api/lights` - List all connected lights
 - ✅ `GET /api/lights/:unitId` - Get specific light info
 - ✅ `POST /api/lights/all/color` - Set color for all lights
@@ -41,12 +41,12 @@ All components of the ESP-01 wireless light control system have been successfull
 
 ### 2. Frontend (React)
 
-#### Lights API Client (`src/services/api.js`)
+#### Lights API Client (`Headunit/src/services/api.js`)
 - ✅ LightsAPI class with all REST methods
 - ✅ Error handling and JSON serialization
 - ✅ Singleton instance export
 
-#### Enhanced GPIO Control Page (`src/pages/GPIOControl.jsx`)
+#### Enhanced GPIO Control Page (`Headunit/src/pages/GPIOControl.jsx`)
 - ✅ **All Lights Control Section:**
   - Existing color wheel (360° hue, radial saturation)
   - Vertical brightness slider (0-100%)
@@ -68,7 +68,7 @@ All components of the ESP-01 wireless light control system have been successfull
 
 ### 3. ESP-01 Firmware (Arduino/C++)
 
-#### Main Firmware (`Controller/esp01_light_controller/esp01_light_controller.ino`)
+#### Main Firmware (`Accessories/Lights/esp01_light_controller.ino`)
 - ✅ WiFi connection logic
   - Hardcoded credentials (NodeNav-Lights / NodeNavPassword)
   - Auto-scan and connect
@@ -110,7 +110,7 @@ All components of the ESP-01 wireless light control system have been successfull
   - Advanced configuration
   - Security considerations
 
-- ✅ `Controller/esp01_light_controller/README.md` - Hardware guide
+- ✅ `Accessories/Lights/README.md` - Hardware guide
   - Wiring diagrams
   - Arduino IDE setup
   - Library installation
@@ -178,19 +178,19 @@ All components of the ESP-01 wireless light control system have been successfull
 ## Files Modified/Created
 
 ### Created (12 files):
-1. `src/services/lights-service.js` - 400+ lines
+1. `Headunit/src/services/lights-service.js` - 400+ lines
 2. `setup-linux-wifi-ap.sh` - 100+ lines
 3. `teardown-linux-wifi-ap.sh` - 50+ lines
-4. `Controller/esp01_light_controller/esp01_light_controller.ino` - 550+ lines
-5. `Controller/esp01_light_controller/README.md` - 300+ lines
+4. `Accessories/Lights/esp01_light_controller.ino` - 550+ lines
+5. `Accessories/Lights/README.md` - 300+ lines
 6. `WIRELESS_LIGHTS_SETUP.md` - 600+ lines
 7. `LIGHTS_QUICK_START.md` - 200+ lines
 8. `IMPLEMENTATION_SUMMARY.md` - This file
 
 ### Modified (3 files):
-1. `src/server.js` - Added WebSocket server, 9 REST endpoints, cleanup
-2. `src/services/api.js` - Added LightsAPI class (100+ lines)
-3. `src/pages/GPIOControl.jsx` - Complete UI overhaul (350+ lines modified)
+1. `Headunit/src/server.js` - Added WebSocket server, 9 REST endpoints, cleanup
+2. `Headunit/src/services/api.js` - Added LightsAPI class (100+ lines)
+3. `Headunit/src/pages/GPIOControl.jsx` - Complete UI overhaul (350+ lines modified)
 
 ### Dependencies Added:
 1. `ws` - WebSocket server library
@@ -283,7 +283,7 @@ The system is ready for testing with physical hardware. Follow the `LIGHTS_QUICK
 
 1. **Getting Started:** See `LIGHTS_QUICK_START.md`
 2. **Full Documentation:** See `WIRELESS_LIGHTS_SETUP.md`
-3. **Hardware Setup:** See `Controller/esp01_light_controller/README.md`
+3. **Hardware Setup:** See `Accessories/Lights/README.md`
 4. **API Reference:** See API section in `WIRELESS_LIGHTS_SETUP.md`
 5. **Troubleshooting:** See Troubleshooting section in `WIRELESS_LIGHTS_SETUP.md`
 

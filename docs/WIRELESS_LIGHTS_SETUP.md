@@ -165,7 +165,7 @@ sudo systemctl start nodenav-lights.service
 
 #### 1. Prepare Arduino IDE
 
-Follow the instructions in `Controller/esp01_light_controller/README.md` to:
+Follow the instructions in `Accessories/Lights/README.md` to:
 
 1. Install ESP8266 board support
 2. Install required libraries (ArduinoWebsockets, ArduinoJson)
@@ -186,7 +186,7 @@ ESP-01 TX    → Blue LED → Resistor → GND (optional)
 #### 3. Upload Firmware
 
 1. Connect ESP-01 to USB-to-Serial adapter in programming mode (GPIO0 → GND)
-2. Open `Controller/esp01_light_controller/esp01_light_controller.ino` in Arduino IDE
+2. Open `Accessories/Lights/esp01_light_controller.ino` in Arduino IDE
 3. Verify network settings match your setup:
    ```cpp
    const char* SSID = "NodeNav-Lights";
@@ -435,7 +435,7 @@ To change the SSID or password:
 
 ### Using Different WebSocket Port
 
-1. **Server:** Edit `src/server.js` and change `PORT` constant
+1. **Server:** Edit `Headunit/src/server.js` and change `PORT` constant
 2. **ESP-01:** Edit firmware and change `WS_PORT` constant
 
 ### Adding Internet Access to Light Units
@@ -493,7 +493,7 @@ This system is part of the NodeNav project. See main LICENSE file for details.
 For issues, questions, or contributions:
 - GitHub: [Your repository URL]
 - Documentation: See other `.md` files in this repository
-- ESP-01 specific: See `Controller/esp01_light_controller/README.md`
+- ESP-01 specific: See `Accessories/Lights/README.md`
 
 ## Changelog
 

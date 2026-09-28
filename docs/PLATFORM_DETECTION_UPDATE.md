@@ -13,7 +13,7 @@ Instead of the previous mixed behavior where simulation mode was always loaded.
 
 ## Changes Made
 
-### 1. Created `src/services/bluetooth-device-windows.js`
+### 1. Created `Headunit/src/services/bluetooth-device-windows.js`
 
 A new Windows-specific implementation for Bluetooth device management that:
 - Uses PowerShell to query Windows PnP devices
@@ -22,7 +22,7 @@ A new Windows-specific implementation for Bluetooth device management that:
 - Provides friendly error messages directing users to Windows Settings for pairing
 - Extracts or generates device addresses for compatibility
 
-### 2. Refactored `src/services/bluetooth-service.js`
+### 2. Refactored `Headunit/src/services/bluetooth-service.js`
 
 The service now acts as a platform detector and loader:
 
@@ -123,14 +123,14 @@ When users try to pair a new device:
 ## Testing
 
 ### Windows
-1. Start the backend: `node src/server.js`
+1. Start the backend: `node Headunit/src/server.js`
 2. Check console output - should show "Windows implementation"
 3. Open NodeNav → Settings → Bluetooth
 4. Paired Windows devices should appear automatically
 5. Click "Connect" to connect to a device
 
 ### Linux
-1. Start the backend: `node src/server.js`
+1. Start the backend: `node Headunit/src/server.js`
 2. Check console output - should show "Linux implementation (simulation mode)"
 3. Simulation mode provides mock devices for development
 4. Future: Replace with actual bluetoothctl integration
@@ -173,7 +173,7 @@ Add macOS implementation:
 ## File Structure
 
 ```
-src/services/
+Headunit/src/services/
 ├── bluetooth-service.js          # Platform detector (device management)
 ├── bluetooth-device-windows.js   # NEW: Windows device management
 ├── bluetooth-audio-service.js    # Platform detector (audio streaming)

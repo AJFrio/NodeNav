@@ -27,7 +27,7 @@ The server will:
 
 ### 2. Flash ESP-01 Firmware
 
-1. Open `Controller/esp01_light_controller/esp01_light_controller.ino` in Arduino IDE
+1. Open `Accessories/Lights/esp01_light_controller.ino` in Arduino IDE
 2. Install required libraries:
    - ArduinoWebsockets by Gil Maimon
    - ArduinoJson by Benoit Blanchon (v6.x)
@@ -46,16 +46,16 @@ The server will:
 ## Files Created/Modified
 
 ### Backend
-- ✅ `src/services/lights-service.js` - WebSocket server and light management
-- ✅ `src/server.js` - Added WebSocket integration and REST API endpoints
-- ✅ `src/services/api.js` - Added LightsAPI class
+- ✅ `Headunit/src/services/lights-service.js` - WebSocket server and light management
+- ✅ `Headunit/src/server.js` - Added WebSocket integration and REST API endpoints
+- ✅ `Headunit/src/services/api.js` - Added LightsAPI class
 
 ### Frontend
-- ✅ `src/pages/GPIOControl.jsx` - Enhanced with lights control UI
+- ✅ `Headunit/src/pages/GPIOControl.jsx` - Enhanced with lights control UI
 
 ### ESP-01 Firmware
-- ✅ `Controller/esp01_light_controller/esp01_light_controller.ino` - Complete firmware
-- ✅ `Controller/esp01_light_controller/README.md` - Hardware and setup guide
+- ✅ `Accessories/Lights/esp01_light_controller.ino` - Complete firmware
+- ✅ `Accessories/Lights/README.md` - Hardware and setup guide
 
 ### Linux Scripts
 - ✅ `setup-linux-wifi-ap.sh` - WiFi AP creation script
@@ -180,7 +180,7 @@ See `WIRELESS_LIGHTS_SETUP.md` for:
 
 ## Support
 
-- ESP-01 firmware details: `Controller/esp01_light_controller/README.md`
+- ESP-01 firmware details: `Accessories/Lights/README.md`
 - System documentation: `WIRELESS_LIGHTS_SETUP.md`
 - Project README: `README.md`
 

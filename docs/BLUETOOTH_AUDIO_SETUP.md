@@ -199,7 +199,7 @@ If you want to test the media player without a Bluetooth connection:
 The backend includes a simulation mode that provides mock track data. Simply start the backend server:
 
 ```bash
-cd src
+cd Headunit/src
 node server.js
 ```
 
