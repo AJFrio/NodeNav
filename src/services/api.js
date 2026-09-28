@@ -1,7 +1,9 @@
 /**
  * API service for communicating with the GPIO backend
  */
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+  window.nodeNavConfig?.apiBaseUrl ||
+  `http://localhost:${import.meta.env.VITE_API_PORT || 3001}/api`;
 
 class GPIOAPI {
   constructor() {
@@ -82,7 +84,7 @@ class GPIOAPI {
  */
 class BluetoothAPI {
   constructor() {
-    this.baseURL = 'http://localhost:3001/api';
+    this.baseURL = API_BASE_URL;
   }
 
   async request(endpoint, options = {}) {
@@ -222,7 +224,7 @@ class BluetoothAPI {
  */
 class LightsAPI {
   constructor() {
-    this.baseURL = 'http://localhost:3001/api';
+    this.baseURL = API_BASE_URL;
   }
 
   async request(endpoint, options = {}) {

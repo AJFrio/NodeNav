@@ -5,11 +5,14 @@ const { startServer } = require('./src/server')
 const isDev = process.env.NODE_ENV === 'development'
 
 function createWindow() {
+  const apiPort = process.env.PORT || '3001'
   // Create the browser window
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      additionalArguments: [`--nodenav-api-port=${apiPort}`],
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,

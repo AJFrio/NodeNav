@@ -29,6 +29,8 @@ class GPIOService {
     };
 
     this.log.push(command);
+    const state = this.pinStates.get(pin) || { value: 0 };
+    this.pinStates.set(pin, { ...state, mode });
     console.log(`[GPIO LOG] Set pin ${pin} to mode: ${mode}`);
 
     return Promise.resolve();

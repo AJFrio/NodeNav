@@ -27,6 +27,7 @@ if (platform === 'linux') {
       this.bus = null;
       this.objectManager = null;
       this.mediaPlayers = new Map(); // Track media players by device address
+      this.devicePropertyListeners = new Map();
       this.currentMediaPlayer = null;
     }
 
@@ -39,6 +40,15 @@ if (platform === 'linux') {
         this.bus = systemBus();
         const bluezObj = await this.bus.getProxyObject(BLUEZ_SERVICE, '/');
         this.objectManager = bluezObj.getInterface(OBJECT_MANAGER_INTERFACE);
+        this.objectManager.on('InterfacesRemoved', (objectPath, interfaces) => {
+          if (!interfaces.includes(MEDIA_PLAYER_INTERFACE)) return;
+          for (const [address, playerInfo] of this.mediaPlayers.entries()) {
+            if (playerInfo.path === objectPath) {
+              this.disconnectAudioDevice(address);
+              break;
+            }
+          }
+        });
         console.log('[Bluetooth Audio Linux] Initialized successfully');
         return true;
       } catch (error) {
@@ -72,8 +82,10 @@ if (platform === 'linux') {
           if (interfaces[MEDIA_PLAYER_INTERFACE]) {
             const playerDevicePath = (await this.bus.getProxyObject(BLUEZ_SERVICE, path).then(obj => obj.getInterface(PROPERTIES_INTERFACE).Get(MEDIA_PLAYER_INTERFACE, 'Device'))).value;
             const deviceObj = await this.bus.getProxyObject(BLUEZ_SERVICE, playerDevicePath);
-            const deviceProps = await deviceObj.getInterface(PROPERTIES_INTERFACE).GetAll('org.bluez.Device1');
+            const deviceProperties = deviceObj.getInterface(PROPERTIES_INTERFACE);
+            const deviceProps = await deviceProperties.GetAll('org.bluez.Device1');
             const address = deviceProps.Address.value;
+            const addressKey = address.toLowerCase();
 
             if (address.toLowerCase() === deviceAddress.toLowerCase()) {
               console.log(`[Linux Bluetooth] Found media player for ${deviceAddress}: ${path}`);
@@ -82,13 +94,30 @@ if (platform === 'linux') {
               const player = playerObj.getInterface(MEDIA_PLAYER_INTERFACE);
               const playerProps = playerObj.getInterface(PROPERTIES_INTERFACE);
 
-              this.mediaPlayers.set(deviceAddress, {
+              const previousListener = this.devicePropertyListeners.get(addressKey);
+              if (previousListener) {
+                previousListener.properties.removeListener('PropertiesChanged', previousListener.handler);
+              }
+              const handleDevicePropertiesChanged = (interfaceName, changedProperties) => {
+                if (interfaceName === 'org.bluez.Device1' && changedProperties.Connected?.value === false) {
+                  this.disconnectAudioDevice(addressKey);
+                }
+              };
+              deviceProperties.on('PropertiesChanged', handleDevicePropertiesChanged);
+              this.devicePropertyListeners.set(addressKey, {
+                properties: deviceProperties,
+                handler: handleDevicePropertiesChanged,
+              });
+
+              this.mediaPlayers.set(addressKey, {
+                address,
                 path,
+                devicePath: playerDevicePath,
                 player,
                 playerProps
               });
 
-              this.currentMediaPlayer = deviceAddress;
+              this.currentMediaPlayer = addressKey;
               return true;
             }
           }
@@ -100,6 +129,31 @@ if (platform === 'linux') {
         console.error('[Linux Bluetooth] Error finding media player:', error.message);
         return false;
       }
+    }
+
+    /**
+     * Clear media control state for a disconnected device.
+     */
+    async disconnectAudioDevice(deviceAddress = null) {
+      const addressKey = deviceAddress?.toLowerCase() || null;
+      const addresses = deviceAddress
+        ? [addressKey]
+        : Array.from(this.mediaPlayers.keys());
+
+      for (const address of addresses) {
+        const listener = this.devicePropertyListeners.get(address);
+        if (listener) {
+          listener.properties.removeListener('PropertiesChanged', listener.handler);
+          this.devicePropertyListeners.delete(address);
+        }
+        this.mediaPlayers.delete(address);
+      }
+
+      if (!addressKey || this.currentMediaPlayer === addressKey || !this.mediaPlayers.has(this.currentMediaPlayer)) {
+        this.currentMediaPlayer = this.mediaPlayers.keys().next().value || null;
+      }
+
+      return { success: true, device: deviceAddress };
     }
 
     /**
@@ -126,6 +180,7 @@ if (platform === 'linux') {
       if (!playerInfo) {
         return {
           connected: true,
+          device: address,
           isPlaying: false,
           track: {
             title: 'No Media Player',
@@ -146,7 +201,7 @@ if (platform === 'linux') {
 
         return {
           connected: true,
-          device: address,
+          device: playerInfo.address,
           isPlaying: status === 'playing',
           track: {
             title: track.Title?.value || 'Unknown',
@@ -158,8 +213,9 @@ if (platform === 'linux') {
         };
       } catch (error) {
         console.error('[Linux Bluetooth] Error getting media metadata:', error.message);
+        await this.disconnectAudioDevice(address);
         return {
-          connected: true,
+          connected: false,
           isPlaying: false,
           track: {
             title: 'Unknown',
@@ -256,6 +312,12 @@ if (platform === 'linux') {
      * Cleanup resources
      */
     cleanup() {
+      for (const [address, listener] of this.devicePropertyListeners.entries()) {
+        listener.properties.removeListener('PropertiesChanged', listener.handler);
+        this.devicePropertyListeners.delete(address);
+      }
+      this.mediaPlayers.clear();
+      this.currentMediaPlayer = null;
       console.log('[Bluetooth Audio Linux] Service cleaned up');
     }
   }
@@ -268,7 +330,7 @@ if (platform === 'linux') {
   bluetoothAudioService = {
     initialize: async () => { throw new Error('Platform not supported'); },
     connectAudioDevice: async () => { throw new Error('Platform not supported'); },
-    disconnectAudioDevice: async () => { throw new Error('Platform not supported'); },
+    disconnectAudioDevice: async (deviceAddress = null) => ({ success: true, device: deviceAddress }),
     getMediaState: () => ({ connected: false, isPlaying: false, track: null }),
     play: async () => { throw new Error('Platform not supported'); },
     pause: async () => { throw new Error('Platform not supported'); },

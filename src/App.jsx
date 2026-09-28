@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage';
 import SettingsButton from './components/SettingsButton';
 import NavigationItem from './components/NavigationItem';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { MapSyncProvider } from './hooks/useMapSync';
 import { styles, getColors } from './styles';
 
 import HomeIcon from './components/icons/HomeIcon';
@@ -150,7 +151,9 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <MapSyncProvider>
+        <AppContent />
+      </MapSyncProvider>
     </ThemeProvider>
   );
 }

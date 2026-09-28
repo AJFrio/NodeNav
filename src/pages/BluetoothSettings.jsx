@@ -57,8 +57,13 @@ const BluetoothSettings = () => {
       setAdapterInfo(adapter);
       setDevices(allDevices);
       setConnectedDevices(connected);
+      setIsScanning(Boolean(adapter?.discovering));
       setError(null);
-      setHasAdapter(!!adapter);
+      setHasAdapter(Boolean(
+        adapter?.address &&
+        adapter.address !== 'Not initialized' &&
+        adapter.address !== 'Error'
+      ));
     } catch (err) {
       // If adapter is not found, set a specific error and don't retry
       if (err.message && err.message.includes('not found')) {
