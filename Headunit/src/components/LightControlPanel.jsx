@@ -74,19 +74,22 @@ const LightControlPanel = () => {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <h2 style={{ ...styles.typography.h3, color: colors['text-primary'], marginBottom: '1rem', flexShrink: 0 }}>
+      <h2 style={{ ...styles.typography.h3, color: colors['text-primary'], marginBottom: '0.65rem', flexShrink: 0 }}>
         Lights
       </h2>
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         {/* Main Control Area */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* On/Off Button */}
           <button
             onClick={toggleLights}
+            type="button"
+            aria-label={isLightOn ? 'Turn lights off' : 'Turn lights on'}
+            aria-pressed={isLightOn}
             style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '0.75rem',
+            width: '66px',
+            height: '66px',
+            borderRadius: '1rem',
               border: `2px solid ${isLightOn ? colors.primary : colors['bg-tertiary']}`,
               backgroundColor: colors['bg-tertiary'],
               display: 'flex',
@@ -112,6 +115,7 @@ const LightControlPanel = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <input
                 type="range"
+                aria-label="Light brightness"
                 min="0"
                 max="100"
                 value={globalBrightness}
@@ -152,9 +156,12 @@ const sliderStyle = (colors, progress) => ({
   WebkitAppearance: 'none',
   appearance: 'none',
   width: '100%',
-  height: '8px',
-  borderRadius: '4px',
-  background: `linear-gradient(to right, ${colors.primary} ${progress}%, ${colors['bg-quaternary']} ${progress}%)`,
+              height: '34px',
+              borderRadius: '8px',
+              background: `linear-gradient(to right, ${colors.primary} ${progress}%, ${colors['bg-quaternary']} ${progress}%)`,
+              backgroundSize: '100% 6px',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
   outline: 'none',
   opacity: '0.9',
   transition: 'opacity .15s ease-in-out',

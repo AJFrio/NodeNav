@@ -90,24 +90,9 @@ const HomePage = () => {
   }
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gridTemplateRows: '1fr',
-      gap: '2rem',
-      height: '100%',
-      padding: '2rem',
-      boxSizing: 'border-box',
-    }}>
+    <div className="home-dashboard">
       {/* Left side: Map */}
-      <div style={{
-        gridColumn: '1 / 2',
-        gridRow: '1 / 2',
-        borderRadius: '1rem',
-        overflow: 'hidden',
-        border: `2px solid ${colors['bg-tertiary']}`,
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-      }}>
+      <div className="home-map-card">
         <MapBox
           center={center}
           zoom={zoom}
@@ -121,29 +106,11 @@ const HomePage = () => {
       </div>
 
       {/* Right side: Panels */}
-      <div style={{
-        gridColumn: '2 / 3',
-        gridRow: '1 / 2',
-        display: 'grid',
-        gridTemplateRows: '1fr 1fr',
-        gap: '2rem'
-      }}>
-        <div style={{
-          gridRow: '1 / 2',
-          backgroundColor: colors['bg-secondary'],
-          borderRadius: '1rem',
-          padding: '1.5rem',
-          border: `1px solid ${colors['bg-tertiary']}`,
-        }}>
+      <div className="home-control-stack">
+        <div className="home-control-card" style={{ backgroundColor: colors['bg-secondary'] }}>
           <MediaControlPanel />
         </div>
-        <div style={{
-          gridRow: '2 / 3',
-          backgroundColor: colors['bg-secondary'],
-          borderRadius: '1rem',
-          padding: '1.5rem',
-          border: `1px solid ${colors['bg-tertiary']}`,
-        }}>
+        <div className="home-control-card" style={{ backgroundColor: colors['bg-secondary'] }}>
           <LightControlPanel />
         </div>
       </div>

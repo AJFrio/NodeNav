@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { Minus, Plus, Route as RouteIcon, LoaderCircle, TriangleAlert } from 'lucide-react';
 import MapBox from '../components/MapBox';
 import MusicControlWidget from '../components/MusicControlWidget';
 import Directions from '../components/Directions';
@@ -8,15 +9,18 @@ import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles';
 import { bluetoothAPI } from '../services/api';
 import { useMapSync } from '../hooks/useMapSync';
-import SearchIcon from '../components/icons/SearchIcon';
 
 const NavigationPage = () => {
   const { theme, isDark } = useTheme();
   const colors = getColors(theme);
   const mapInstanceRef = useRef(null);
+  const routeRequestIdRef = useRef(0);
+  const [mapReady, setMapReady] = useState(false);
   const [destination, setDestination] = useState(null);
-  const [showDirections, setShowDirections] = useState(false);
   const [tripActive, setTripActive] = useState(false);
+  const [routeSummary, setRouteSummary] = useState(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [routeError, setRouteError] = useState('');
 
   // Music state from localStorage
   const [musicState, setMusicState] = useState({
@@ -37,6 +41,7 @@ const NavigationPage = () => {
 
   // Use the synchronized map state
   const { center, zoom, bearing, pitch, route, updateMapState, clearRoute } = useMapSync();
+  const hasMusicTrack = Boolean(musicState.currentTrack);
 
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -73,6 +78,7 @@ const NavigationPage = () => {
     
     // Store map instance in a ref so we can update it when theme changes
     mapInstanceRef.current = mapInstance;
+    setMapReady(true);
     
     // Only configure Standard style if 3D is enabled
     if (enable3DMaps) {
@@ -203,10 +209,14 @@ const NavigationPage = () => {
     }
   };
 
-  const handleDestinationSelect = async (coords) => {
-    setDestination(coords);
-    setShowDirections(false);
+  const handleDestinationSelect = async (coords, placeName) => {
+    const requestId = ++routeRequestIdRef.current;
+    setDestination(placeName || 'Destination');
     setTripActive(false); // Reset trip state
+    setRouteSummary(null);
+    setRouteError('');
+    setRouteLoading(true);
+    clearRoute();
 
     const start = center; // Using current map center as start
     const end = coords;
@@ -215,29 +225,46 @@ const NavigationPage = () => {
 
     try {
       const response = await fetch(url);
+      if (!response.ok) throw new Error('Route service is unavailable. Try again.');
       const data = await response.json();
-      if (data.routes) {
-        updateMapState({ route: data.routes[0].geometry });
-      }
+      const routeResult = data.routes?.[0];
+      if (!routeResult?.geometry?.coordinates?.length) throw new Error('No drivable route found for this destination.');
+      if (requestId !== routeRequestIdRef.current) return;
+      setRouteSummary({ distance: routeResult.distance, duration: routeResult.duration });
+      updateMapState({ route: routeResult.geometry });
     } catch (err) {
+      if (requestId !== routeRequestIdRef.current) return;
       console.error('Failed to fetch directions:', err);
+      setRouteError(err.message || 'Could not calculate this route. Check your connection and try again.');
+    } finally {
+      if (requestId === routeRequestIdRef.current) setRouteLoading(false);
     }
   };
 
-  // Fit map to route bounds when a new route is set
-  useEffect(() => {
-    if (route && mapInstanceRef.current && !tripActive) {
-      const bounds = route.coordinates.reduce((bounds, coord) => {
-        return bounds.extend(coord);
-      }, new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0]));
+  const fitRouteOverview = () => {
+    if (!route?.coordinates?.length || !mapInstanceRef.current) return;
+    const bounds = route.coordinates.reduce((currentBounds, coord) => currentBounds.extend(coord),
+      new mapboxgl.LngLatBounds(route.coordinates[0], route.coordinates[0]));
+    const mapWidth = mapInstanceRef.current.getContainer().clientWidth;
+    mapInstanceRef.current.fitBounds(bounds, {
+      // Keep the whole route visible beside the search and floating route card.
+      padding: {
+        top: hasMusicTrack ? 178 : 106,
+        right: mapWidth < 520 ? 24 : 42,
+        bottom: mapWidth < 520 ? 156 : 112,
+        left: 28,
+      },
+      maxZoom: 14.25,
+      pitch: 0,
+      bearing: 0,
+      duration: 1050,
+    });
+  };
 
-      mapInstanceRef.current.fitBounds(bounds, {
-        padding: 100,
-        pitch: 0,
-        bearing: 0,
-      });
-    }
-  }, [route, tripActive]);
+  // Frame the whole route before showing the Begin drive action.
+  useEffect(() => {
+    if (route?.coordinates?.length && mapReady && !tripActive) fitRouteOverview();
+  }, [route, tripActive, mapReady, hasMusicTrack]);
 
   // Handler for "Begin Drive"
   const handleBeginTrip = () => {
@@ -245,11 +272,11 @@ const NavigationPage = () => {
     // Reorient the map to the driver's perspective
     if (mapInstanceRef.current) {
       mapInstanceRef.current.easeTo({
-        center,
-        zoom: 16.5,
-        pitch: 60,
+        center: route?.coordinates?.[0] || center,
+        zoom: 16,
+        pitch: 52,
         bearing: 0,
-        duration: 1500,
+        duration: 1100,
       });
     }
   };
@@ -257,6 +284,8 @@ const NavigationPage = () => {
   // Handler for "Cancel"
   const handleCancelTrip = () => {
     setDestination(null);
+    setRouteSummary(null);
+    setRouteError('');
     clearRoute();
     setTripActive(false);
   };
@@ -264,6 +293,8 @@ const NavigationPage = () => {
   // Handler for "Stop Trip"
   const handleStopTrip = () => {
     setDestination(null);
+    setRouteSummary(null);
+    setRouteError('');
     clearRoute();
     setTripActive(false);
   };
@@ -276,7 +307,7 @@ const NavigationPage = () => {
       <div
         style={{
           width: '100%',
-          height: '100vh',
+          height: '100%',
           backgroundColor: colors['bg-primary'],
           display: 'flex',
           alignItems: 'center',
@@ -347,14 +378,13 @@ const NavigationPage = () => {
     <div
       style={{
         width: '100%',
-        height: '100vh',
+        height: '100%',
         backgroundColor: colors['bg-primary'],
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Directions Search */}
-      <Directions onDestinationSelect={handleDestinationSelect} onToggle={() => setShowDirections(!showDirections)} />
+      <Directions onDestinationSelect={handleDestinationSelect} />
 
       {/* Map Container */}
       <div
@@ -385,13 +415,43 @@ const NavigationPage = () => {
         onNext={handleNext}
       />
 
+      <div
+        aria-label="Map controls"
+        style={{ position: 'absolute', top: '50%', right: 16, zIndex: 12, display: 'flex', flexDirection: 'column', gap: 8, transform: 'translateY(-50%)' }}
+      >
+        {route && !tripActive && (
+          <button className="map-touch-control" type="button" onClick={fitRouteOverview} aria-label="Show full route" title="Show full route">
+            <RouteIcon size={19} />
+          </button>
+        )}
+        <button className="map-touch-control" type="button" onClick={() => mapInstanceRef.current?.zoomIn({ duration: 220 })} aria-label="Zoom in" title="Zoom in">
+          <Plus size={21} />
+        </button>
+        <button className="map-touch-control" type="button" onClick={() => mapInstanceRef.current?.zoomOut({ duration: 220 })} aria-label="Zoom out" title="Zoom out">
+          <Minus size={21} />
+        </button>
+      </div>
+
+      {(routeLoading || routeError) && (
+        <div
+          className="map-overlay-surface"
+          role={routeError ? 'alert' : 'status'}
+          style={{ position: 'absolute', top: 82, left: '50%', zIndex: 14, display: 'flex', alignItems: 'center', gap: 9, maxWidth: 'min(460px, calc(100% - 32px))', padding: '12px 15px', color: routeError ? '#ffd1cf' : '#f4f6f9', fontSize: 13, transform: 'translateX(-50%)' }}
+        >
+          {routeError ? <TriangleAlert size={17} /> : <LoaderCircle size={17} className="search-spinner" />}
+          <span>{routeError || `Finding a route to ${destination}…`}</span>
+        </div>
+      )}
+
       {/* Trip Manager */}
-      {route && (
+      {route && !routeLoading && (
         <TripManager
           tripActive={tripActive}
           onBegin={handleBeginTrip}
           onCancel={handleCancelTrip}
           onStop={handleStopTrip}
+          destinationLabel={destination}
+          routeSummary={routeSummary}
         />
       )}
     </div>

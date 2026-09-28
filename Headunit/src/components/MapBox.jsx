@@ -129,6 +129,21 @@ const MapBox = ({
         });
 
         map.current.addLayer({
+          id: `${routeId}-casing`,
+          type: 'line',
+          source: routeId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#101923',
+            'line-width': 14,
+            'line-opacity': 0.8,
+          },
+        });
+
+        map.current.addLayer({
           id: routeId,
           type: 'line',
           source: routeId,
@@ -137,16 +152,17 @@ const MapBox = ({
             'line-cap': 'round',
           },
           paint: {
-            'line-color': '#0099ff', // A vibrant blue
-            'line-width': 8,
-            'line-opacity': 0.9,
+            'line-color': '#52a8ff',
+            'line-width': 7,
+            'line-opacity': 1,
             'line-emissive-strength': 0.8,
           },
         });
       }
     } else if (source) {
       // If no route is provided and the source exists, clear it
-      map.current.removeLayer(routeId);
+      if (map.current.getLayer(routeId)) map.current.removeLayer(routeId);
+      if (map.current.getLayer(`${routeId}-casing`)) map.current.removeLayer(`${routeId}-casing`);
       map.current.removeSource(routeId);
     }
   }, [route, mapLoaded]);

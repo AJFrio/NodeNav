@@ -23,7 +23,7 @@ const SettingsButton = ({
       transition: 'all 150ms ease-in-out',
       display: 'flex',
       alignItems: 'center',
-      padding: '1.5rem',
+      padding: '1.15rem',
       backgroundColor: isHovered ? colors['bg-tertiary'] : colors['bg-secondary'],
       borderColor: isHovered ? colors['bg-quaternary'] : colors['bg-tertiary'],
     }
@@ -38,8 +38,8 @@ const SettingsButton = ({
       onMouseLeave={() => setIsHovered(false)}
       className={className}
     >
-      <div style={{ marginRight: '1.5rem' }}>
-        <Icon size={32} color={colors['text-primary']} />
+      <div style={{ marginRight: '1rem' }}>
+        <Icon size={27} color={colors['text-primary']} />
       </div>
       <div>
         <div style={{ ...styles.typography.h3, color: colors['text-primary'], marginBottom: '0.25rem' }}>
