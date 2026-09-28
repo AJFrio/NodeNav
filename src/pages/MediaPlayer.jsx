@@ -153,6 +153,17 @@ const MediaPlayer = () => {
           duration: state.track.duration || 0,
           position: backendPosition
         });
+      } else {
+        setIsPlaying(false);
+        setConnectedDevice(null);
+        setAlbumArtUrl(null);
+        setCurrentTrack({
+          title: 'No Track Playing',
+          artist: 'No Artist',
+          album: 'Unknown Album',
+          duration: 0,
+          position: 0,
+        });
       }
     } catch (error) {
       // Silently fail - backend might not be running
@@ -235,17 +246,6 @@ const MediaPlayer = () => {
     } catch (error) {
       console.error('[Media Player] Previous track failed:', error);
     }
-  };
-
-  const handleProgressClick = (e) => {
-    const progressBar = e.currentTarget;
-    const rect = progressBar.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
-    const newPosition = Math.floor(percentage * currentTrack.duration);
-    
-    setCurrentTrack(prev => ({ ...prev, position: newPosition }));
-    console.log(`[Media] Seeked to ${formatTime(newPosition)}`);
   };
 
   const formatTime = (seconds) => {
@@ -444,13 +444,17 @@ const MediaPlayer = () => {
         flexShrink: 0,
       }}>
         <div
-          onClick={handleProgressClick}
+          role="progressbar"
+          aria-label="Playback progress"
+          aria-valuemin={0}
+          aria-valuemax={currentTrack.duration}
+          aria-valuenow={currentTrack.position}
           style={{
             width: '100%',
             height: '8px',
             backgroundColor: colors['bg-tertiary'],
             borderRadius: '4px',
-            cursor: 'pointer',
+            cursor: 'default',
             position: 'relative',
             marginBottom: '0.5rem',
           }}

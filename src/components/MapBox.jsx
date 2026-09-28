@@ -13,12 +13,21 @@ const MapBox = ({
   pitch = 0, // Tilt angle in degrees (0-85 in v3)
   style = 'mapbox://styles/mapbox/streets-v12', // Default to streets style
   onMapLoad = null,
+  onCameraChange = null,
   route = null,
   ...props
 }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
+  const activeStyle = useRef(style);
+  const onMapLoadRef = useRef(onMapLoad);
+  const onCameraChangeRef = useRef(onCameraChange);
   const [mapLoaded, setMapLoaded] = useState(false);
+
+  useEffect(() => {
+    onMapLoadRef.current = onMapLoad;
+    onCameraChangeRef.current = onCameraChange;
+  }, [onMapLoad, onCameraChange]);
 
   // Initialize map
   useEffect(() => {
@@ -30,7 +39,7 @@ const MapBox = ({
       return;
     }
 
-    map.current = new mapboxgl.Map({
+    const mapInstance = new mapboxgl.Map({
       container: mapContainer.current,
       style: style,
       center: center,
@@ -39,13 +48,25 @@ const MapBox = ({
       pitch: pitch,
       attributionControl: false,
     });
+    map.current = mapInstance;
 
-    // Map loaded event
-    map.current.on('load', () => {
+    // A style load happens both at startup and whenever the style changes.
+    mapInstance.on('style.load', () => {
       setMapLoaded(true);
-      if (onMapLoad && typeof onMapLoad === 'function') {
-        onMapLoad(map.current);
+      if (typeof onMapLoadRef.current === 'function') {
+        onMapLoadRef.current(mapInstance);
       }
+    });
+
+    mapInstance.on('moveend', () => {
+      if (typeof onCameraChangeRef.current !== 'function') return;
+      const mapCenter = mapInstance.getCenter();
+      onCameraChangeRef.current({
+        center: [mapCenter.lng, mapCenter.lat],
+        zoom: mapInstance.getZoom(),
+        bearing: mapInstance.getBearing(),
+        pitch: mapInstance.getPitch(),
+      });
     });
 
     // Cleanup on unmount
@@ -53,9 +74,19 @@ const MapBox = ({
       if (map.current) {
         map.current.remove();
         map.current = null;
+        setMapLoaded(false);
       }
     };
   }, []); // Empty dependency array - only run once
+
+  // Apply style changes after initialization. Mark the map unloaded while the
+  // new style is fetched so route sources are restored after style.load.
+  useEffect(() => {
+    if (!map.current || activeStyle.current === style) return;
+    activeStyle.current = style;
+    setMapLoaded(false);
+    map.current.setStyle(style);
+  }, [style]);
 
   // Update map camera when props change
   useEffect(() => {
@@ -134,4 +165,3 @@ const MapBox = ({
 };
 
 export default MapBox;
-

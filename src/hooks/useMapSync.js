@@ -1,41 +1,54 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
-// Key for localStorage
 const MAP_STATE_KEY = 'nodenav-map-state';
+const DEFAULT_MAP_STATE = {
+  center: [-105.2705, 40.0150], // Boulder, CO
+  zoom: 16.5,
+  bearing: 0,
+  pitch: 60,
+  route: null,
+};
+const MapSyncContext = createContext(null);
 
-// Custom hook to synchronize map state and route across components
-export const useMapSync = () => {
-  // Load initial state from localStorage or use default values
-  const getInitialState = () => {
-    try {
-      const savedState = localStorage.getItem(MAP_STATE_KEY);
-      if (savedState) {
-        const parsed = JSON.parse(savedState);
-        // Ensure all required fields are present
-        return {
-          center: parsed.center || [-105.2705, 40.0150],
-          zoom: parsed.zoom || 16.5,
-          bearing: parsed.bearing || 0,
-          pitch: parsed.pitch || 60,
-          route: parsed.route || null,
-        };
-      }
-    } catch (error) {
-      console.error('Failed to parse map state from localStorage:', error);
-    }
-    // Default state if nothing in localStorage or parsing fails
+const loadMapState = () => {
+  try {
+    const savedState = localStorage.getItem(MAP_STATE_KEY);
+    if (!savedState) return DEFAULT_MAP_STATE;
+
+    const parsed = JSON.parse(savedState);
     return {
-      center: [-105.2705, 40.0150], // Boulder, CO
-      zoom: 16.5,
-      bearing: 0,
-      pitch: 60,
-      route: null,
+      center: Array.isArray(parsed.center) && parsed.center.length === 2
+        ? parsed.center
+        : DEFAULT_MAP_STATE.center,
+      zoom: Number.isFinite(parsed.zoom) ? parsed.zoom : DEFAULT_MAP_STATE.zoom,
+      bearing: Number.isFinite(parsed.bearing) ? parsed.bearing : DEFAULT_MAP_STATE.bearing,
+      pitch: Number.isFinite(parsed.pitch) ? parsed.pitch : DEFAULT_MAP_STATE.pitch,
+      route: parsed.route || null,
     };
-  };
+  } catch (error) {
+    console.error('Failed to load map state from localStorage:', error);
+    return DEFAULT_MAP_STATE;
+  }
+};
 
-  const [mapState, setMapState] = useState(getInitialState);
+const sameCamera = (left, right) =>
+  Array.isArray(left.center) && Array.isArray(right.center) &&
+  Math.abs(left.center[0] - right.center[0]) < 1e-7 &&
+  Math.abs(left.center[1] - right.center[1]) < 1e-7 &&
+  Math.abs(left.zoom - right.zoom) < 1e-4 &&
+  Math.abs(left.bearing - right.bearing) < 1e-3 &&
+  Math.abs(left.pitch - right.pitch) < 1e-3;
 
-  // Save state to localStorage whenever it changes
+export const MapSyncProvider = ({ children }) => {
+  const [mapState, setMapState] = useState(loadMapState);
+
   useEffect(() => {
     try {
       localStorage.setItem(MAP_STATE_KEY, JSON.stringify(mapState));
@@ -44,36 +57,52 @@ export const useMapSync = () => {
     }
   }, [mapState]);
 
-  // Listen for changes from other tabs/windows
   useEffect(() => {
     const handleStorageChange = (event) => {
-      if (event.key === MAP_STATE_KEY) {
-        try {
-          const newState = JSON.parse(event.newValue);
-          if (newState) {
-            setMapState(newState);
-          }
-        } catch (error) {
-          console.error('Failed to parse updated map state from localStorage:', error);
+      if (event.key !== MAP_STATE_KEY || !event.newValue) return;
+      try {
+        const nextState = JSON.parse(event.newValue);
+        if (nextState && Array.isArray(nextState.center)) {
+          setMapState({ ...DEFAULT_MAP_STATE, ...nextState });
         }
+      } catch (error) {
+        console.error('Failed to parse updated map state from localStorage:', error);
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Update a specific part of the map state
   const updateMapState = useCallback((newState) => {
-    setMapState((prevState) => ({ ...prevState, ...newState }));
+    setMapState((previousState) => {
+      const nextState = { ...previousState, ...newState };
+      if (sameCamera(previousState, nextState) && previousState.route === nextState.route) {
+        return previousState;
+      }
+      return nextState;
+    });
   }, []);
 
-  // Clear the route from the map state
   const clearRoute = useCallback(() => {
-    setMapState((prevState) => ({ ...prevState, route: null }));
+    setMapState((previousState) => previousState.route === null
+      ? previousState
+      : { ...previousState, route: null });
   }, []);
 
-  return { ...mapState, updateMapState, clearRoute };
+  const value = useMemo(() => ({ ...mapState, updateMapState, clearRoute }), [
+    mapState,
+    updateMapState,
+    clearRoute,
+  ]);
+
+  return React.createElement(MapSyncContext.Provider, { value }, children);
+};
+
+export const useMapSync = () => {
+  const context = useContext(MapSyncContext);
+  if (!context) {
+    throw new Error('useMapSync must be used within a MapSyncProvider');
+  }
+  return context;
 };

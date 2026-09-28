@@ -76,19 +76,13 @@ const NavigationPage = () => {
     
     // Only configure Standard style if 3D is enabled
     if (enable3DMaps) {
-      mapInstance.on('style.load', () => {
-        // Set light preset based on theme (day, dusk, dawn, or night)
-        try {
-          mapInstance.setConfigProperty('basemap', 'lightPreset', isDark ? 'night' : 'day');
-          
-          // Ensure 3D objects (buildings, landmarks, trees) are enabled
-          mapInstance.setConfigProperty('basemap', 'show3dObjects', true);
-          
-          console.log('3D map configured with light preset:', isDark ? 'night' : 'day');
-        } catch (error) {
-          console.error('Error setting map config:', error);
-        }
-      });
+      try {
+        mapInstance.setConfigProperty('basemap', 'lightPreset', isDark ? 'night' : 'day');
+        mapInstance.setConfigProperty('basemap', 'show3dObjects', true);
+        console.log('3D map configured with light preset:', isDark ? 'night' : 'day');
+      } catch (error) {
+        console.error('Error setting map config:', error);
+      }
     }
   };
 
@@ -376,6 +370,7 @@ const NavigationPage = () => {
           pitch={pitch}
           style={getMapStyle()}
           onMapLoad={handleMapLoad}
+          onCameraChange={updateMapState}
           route={route}
         />
       </div>
@@ -404,4 +399,3 @@ const NavigationPage = () => {
 };
 
 export default NavigationPage;
-

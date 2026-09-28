@@ -140,6 +140,8 @@ Look at the terminal where you ran `node server.js`
 PORT=3002 node src/server.js
 ```
 
+When running the Vite UI in a separate process, set `VITE_API_PORT` to the same value (for example, `VITE_API_PORT=3002 npm run dev`). Electron reads `PORT` directly for its API requests.
+
 ## ❓ Troubleshooting
 
 ### "Cannot connect to backend"

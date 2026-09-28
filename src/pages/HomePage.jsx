@@ -21,7 +21,7 @@ const HomePage = () => {
   });
 
   // Use the synchronized map state
-  const { center, zoom, bearing, pitch, route } = useMapSync();
+  const { center, zoom, bearing, pitch, route, updateMapState } = useMapSync();
 
   // Check if MapBox token is configured
   const hasToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -51,14 +51,12 @@ const HomePage = () => {
   const handleMapLoad = (mapInstance) => {
     mapInstanceRef.current = mapInstance;
     if (enable3DMaps) {
-      mapInstance.on('style.load', () => {
-        try {
-          mapInstance.setConfigProperty('basemap', 'lightPreset', isDark ? 'night' : 'day');
-          mapInstance.setConfigProperty('basemap', 'show3dObjects', true);
-        } catch (error) {
-          console.error('Error setting map config:', error);
-        }
-      });
+      try {
+        mapInstance.setConfigProperty('basemap', 'lightPreset', isDark ? 'night' : 'day');
+        mapInstance.setConfigProperty('basemap', 'show3dObjects', true);
+      } catch (error) {
+        console.error('Error setting map config:', error);
+      }
     }
   };
 
@@ -117,6 +115,7 @@ const HomePage = () => {
           pitch={pitch}
           style={getMapStyle()}
           onMapLoad={handleMapLoad}
+          onCameraChange={updateMapState}
           route={route}
         />
       </div>

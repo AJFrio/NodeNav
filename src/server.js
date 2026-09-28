@@ -45,10 +45,10 @@ app.get('/api/pins', (req, res) => {
 /**
  * GET /api/pins/:pin - Get specific pin state
  */
-app.get('/api/pins/:pin', (req, res) => {
+app.get('/api/pins/:pin', async (req, res) => {
   try {
     const pin = parseInt(req.params.pin);
-    const value = gpioService.digitalRead(pin);
+    const value = await gpioService.digitalRead(pin);
     const state = gpioService.getAllPinStates()[pin];
 
     res.json({
@@ -65,7 +65,7 @@ app.get('/api/pins/:pin', (req, res) => {
 /**
  * POST /api/pins/:pin/mode - Set pin mode
  */
-app.post('/api/pins/:pin/mode', (req, res) => {
+app.post('/api/pins/:pin/mode', async (req, res) => {
   try {
     const pin = parseInt(req.params.pin);
     const { mode } = req.body;
@@ -74,7 +74,7 @@ app.post('/api/pins/:pin/mode', (req, res) => {
       return res.status(400).json({ error: 'Mode is required' });
     }
 
-    gpioService.setPinMode(pin, mode);
+    await gpioService.setPinMode(pin, mode);
     res.json({ success: true, pin, mode });
   } catch (error) {
     console.error(`Error setting pin ${req.params.pin} mode:`, error);
@@ -172,9 +172,9 @@ app.use((error, req, res, next) => {
 /**
  * GET /api/bluetooth/adapter - Get Bluetooth adapter info
  */
-app.get('/api/bluetooth/adapter', (req, res) => {
+app.get('/api/bluetooth/adapter', async (req, res) => {
   try {
-    const adapterInfo = bluetoothService.getAdapterInfo();
+    const adapterInfo = await bluetoothService.getAdapterInfo();
     res.json(adapterInfo);
   } catch (error) {
     console.error('Error getting Bluetooth adapter info:', error);
@@ -269,6 +269,7 @@ app.post('/api/bluetooth/devices/:address/disconnect', async (req, res) => {
   try {
     const { address } = req.params;
     const device = await bluetoothService.disconnectDevice(address);
+    await bluetoothAudioService.disconnectAudioDevice(address);
     res.json({ success: true, device });
   } catch (error) {
     console.error(`Error disconnecting from device ${req.params.address}:`, error);
@@ -283,6 +284,7 @@ app.delete('/api/bluetooth/devices/:address', async (req, res) => {
   try {
     const { address } = req.params;
     const device = await bluetoothService.unpairDevice(address);
+    await bluetoothAudioService.disconnectAudioDevice(address);
     res.json({ success: true, device });
   } catch (error) {
     console.error(`Error unpairing device ${req.params.address}:`, error);
@@ -339,8 +341,8 @@ app.post('/api/bluetooth/audio/connect/:address', async (req, res) => {
  */
 app.post('/api/bluetooth/audio/disconnect', async (req, res) => {
   try {
-    // Media player will be cleared when device disconnects
-    res.json({ success: true });
+    const result = await bluetoothAudioService.disconnectAudioDevice();
+    res.json(result);
   } catch (error) {
     console.error('Error disconnecting audio device:', error);
     res.status(500).json({ error: error.message || 'Failed to disconnect audio' });
